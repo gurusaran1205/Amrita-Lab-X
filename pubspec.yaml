@@ -1,0 +1,46 @@
+name: amrita_ulabs
+description: "AmritaULABS - University Signup Application for Amrita University"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State Management
+  provider: ^6.1.1
+  
+  # HTTP Requests
+  http: ^1.1.2
+  
+  # UI Components
+  flutter_svg: ^2.0.9
+  google_fonts: ^6.1.0
+  pin_code_fields: ^8.0.1
+  
+  # Storage & Utils
+  shared_preferences: ^2.2.2
+  fluttertoast: ^8.2.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  
+  # assets:
+  #   # - assets/images/
+  #   # - assets/icons/
+  
+  fonts:
+    - family: AmritaCustom
+      fonts:
+        - asset: fonts/Roboto-Regular.ttf
+        - asset: fonts/Roboto-Bold.ttf
+          weight: 700
