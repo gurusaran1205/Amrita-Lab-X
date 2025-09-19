@@ -216,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
             color: AppColors.primaryMaroon.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.login_outlined,
             size: 40,
             color: AppColors.primaryMaroon,
@@ -309,7 +309,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildForgotPasswordLink() {
     return TextButton(
       onPressed: () {
-        _showSuccessToast('Forgot password feature coming soon!');
+        Navigator.pushNamed(context, '/forgot_password');
       },
       child: Text(
         'Forgot Password?',

@@ -250,7 +250,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             color: AppColors.primaryMaroon.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.security_outlined,
             size: 40,
             color: AppColors.primaryMaroon,

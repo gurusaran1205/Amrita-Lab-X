@@ -301,7 +301,7 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             color: AppColors.error,
             size: 20,

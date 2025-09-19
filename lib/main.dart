@@ -1,4 +1,5 @@
 import 'package:amrita_ulabs/screens/login_screen.dart';
+import 'package:amrita_ulabs/screens/reset_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +12,7 @@ import 'screens/otp_verification_screen.dart';
 import 'screens/success_screen.dart';
 import 'providers/equipment_provider.dart';
 import 'screens/equipment_selection.dart';
+import 'screens/forgot_password_screen.dart';
 
 void main() {
   runApp(const AmritaULabsApp());
@@ -42,6 +44,12 @@ class AmritaULabsApp extends StatelessWidget {
           '/otp': (context) => const OtpVerificationScreen(),
           '/success': (context) => const SuccessScreen(),
           '/equipment': (context) => const EquipmentSelectionPage(),
+          '/forgot_password': (context) => const ForgotPasswordScreen(),
+          '/reset-password': (context) {
+            final email = ModalRoute.of(context)!.settings.arguments as String;
+            return ResetPasswordScreen(email: email);
+          },
+          // Added forgot password route
         },
       ),
     );

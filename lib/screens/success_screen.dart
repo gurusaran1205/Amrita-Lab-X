@@ -41,7 +41,7 @@ class SuccessScreen extends StatelessWidget {
                           color: AppColors.success.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.check_circle_outline,
                           size: 60,
                           color: AppColors.success,
@@ -125,7 +125,7 @@ class SuccessScreen extends StatelessWidget {
                       // Logout option
                       TextButton(
                         onPressed: () => _handleLogout(context, authProvider),
-                        child: Text(
+                        child: const Text(
                           'Logout',
                           style: TextStyle(
                             color: AppColors.textLight,

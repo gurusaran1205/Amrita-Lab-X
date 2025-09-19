@@ -138,8 +138,9 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage> {
                                       ))
                                   .toList(),
                               onChanged: (dept) {
-                                if (dept != null)
+                                if (dept != null) {
                                   provider.selectDepartment(dept);
+                                }
                               },
                               style: const TextStyle(
                                 fontFamily: 'Proxima Nova',
@@ -213,8 +214,9 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage> {
                               onChanged: provider.selectedLab == null
                                   ? null
                                   : (equip) {
-                                      if (equip != null)
+                                      if (equip != null) {
                                         provider.selectEquipment(equip);
+                                      }
                                     },
                               style: const TextStyle(
                                 fontFamily: 'Proxima Nova',
@@ -405,15 +407,15 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(
                 Icons.summarize_outlined,
-                color: const Color(0xFFA4123F),
+                color: Color(0xFFA4123F),
                 size: 20,
               ),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'Current Selection',
                 style: TextStyle(
                   fontFamily: 'Proxima Nova',
