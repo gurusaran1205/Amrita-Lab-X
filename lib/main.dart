@@ -1,3 +1,7 @@
+import 'package:amrita_ulabs/screens/admin_screen/add_department_screen.dart';
+import 'package:amrita_ulabs/screens/admin_screen/lab_staff_dashboard_screen.dart';
+import 'package:amrita_ulabs/screens/admin_screen/add_lab_screen.dart';
+import 'package:amrita_ulabs/screens/admin_screen/add_equipment_screen.dart';
 import 'package:amrita_ulabs/screens/login_screen.dart';
 import 'package:amrita_ulabs/screens/reset_password_screen.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +53,10 @@ class AmritaULabsApp extends StatelessWidget {
             final email = ModalRoute.of(context)!.settings.arguments as String;
             return ResetPasswordScreen(email: email);
           },
-          // Added forgot password route
+          '/lab_staff_dashboard': (context) => const LabStaffDashboardScreen(),
+          '/add_department': (context) => const AddDepartmentScreen(),
+          '/add_lab' : (context) => const AddLabScreen(),
+          '/add_equipment' : (context) => const AddEquipmentScreen(),
         },
       ),
     );
