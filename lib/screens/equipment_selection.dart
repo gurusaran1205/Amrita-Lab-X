@@ -1,9 +1,12 @@
+import 'package:amrita_ulabs/screens/calendar_screen.dart';
+import 'package:amrita_ulabs/screens/date_time_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/equipment_provider.dart';
 import '../models/department.dart';
 import '../models/lab.dart';
 import '../models/equipment.dart';
+import 'date_time_screen.dart';
 
 class EquipmentSelectionPage extends StatefulWidget {
   const EquipmentSelectionPage({super.key});
@@ -483,38 +486,16 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage> {
           ),
           child: Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white,
-                  const Color(0xFFA4123F).withOpacity(0.05),
-                ],
-              ),
-            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFA4123F).withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: Color(0xFFA4123F),
-                    size: 48,
-                  ),
-                ),
+                const Icon(Icons.check_circle,
+                    color: Color(0xFFA4123F), size: 48),
                 const SizedBox(height: 20),
                 const Text(
                   'Selection Confirmed!',
                   style: TextStyle(
-                    fontFamily: 'Proxima Nova',
-                    fontSize: 24,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
@@ -523,18 +504,24 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage> {
                 Text(
                   '${provider.selectedDept?.name}\n${provider.selectedLab?.name}\n${provider.selectedEquipment?.name}',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'Proxima Nova',
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    height: 1.5,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      Navigator.of(context).pop(); // close dialog
+                      // ✅ Navigate to BookingPage
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BookingPage(
+                            equipmentId: provider.selectedEquipment!.id,
+                          ),
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFA4123F),
                       shape: RoundedRectangleBorder(
@@ -545,7 +532,6 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage> {
                     child: const Text(
                       'Continue',
                       style: TextStyle(
-                        fontFamily: 'Proxima Nova',
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,

@@ -17,6 +17,7 @@ import 'screens/success_screen.dart';
 import 'providers/equipment_provider.dart';
 import 'screens/equipment_selection.dart';
 import 'screens/forgot_password_screen.dart';
+import 'providers/booking_provider.dart';
 
 void main() {
   runApp(const AmritaULabsApp());
@@ -32,10 +33,11 @@ class AmritaULabsApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProxyProvider<AuthProvider, EquipmentProvider>(
           create: (context) => EquipmentProvider(
-            authProvider: Provider.of<AuthProvider>(context, listen: false),
-          ),
-          update: (context, auth, prev) => prev!, // keep same instance
+              authProvider: Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, prev) =>
+              EquipmentProvider(authProvider: auth),
         ),
+        ChangeNotifierProvider(create: (_) => BookingProvider()),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
@@ -50,13 +52,14 @@ class AmritaULabsApp extends StatelessWidget {
           '/equipment': (context) => const EquipmentSelectionPage(),
           '/forgot_password': (context) => const ForgotPasswordScreen(),
           '/reset-password': (context) {
-            final email = ModalRoute.of(context)!.settings.arguments as String;
+            final args = ModalRoute.of(context)?.settings.arguments;
+            final email = (args is String) ? args : "";
             return ResetPasswordScreen(email: email);
           },
           '/lab_staff_dashboard': (context) => const LabStaffDashboardScreen(),
           '/add_department': (context) => const AddDepartmentScreen(),
-          '/add_lab' : (context) => const AddLabScreen(),
-          '/add_equipment' : (context) => const AddEquipmentScreen(),
+          '/add_lab': (context) => const AddLabScreen(),
+          '/add_equipment': (context) => const AddEquipmentScreen(),
         },
       ),
     );
