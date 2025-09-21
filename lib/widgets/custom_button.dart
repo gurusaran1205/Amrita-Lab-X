@@ -53,7 +53,7 @@ class PrimaryButton extends StatelessWidget {
 
   Widget _buildButtonContent() {
     if (isLoading) {
-      return Row(
+      return const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
@@ -66,7 +66,7 @@ class PrimaryButton extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Text(
             'Please wait...',
             style: TextStyle(
@@ -86,7 +86,7 @@ class PrimaryButton extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: AppConstants.bodyFontSize,
               fontWeight: FontWeight.w600,
             ),
@@ -97,7 +97,7 @@ class PrimaryButton extends StatelessWidget {
 
     return Text(
       text,
-      style: TextStyle(
+      style: const TextStyle(
         fontSize: AppConstants.bodyFontSize,
         fontWeight: FontWeight.w600,
       ),
@@ -130,7 +130,7 @@ class SecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool canPress = isEnabled && !isLoading && onPressed != null;
 
-    return Container(
+    return SizedBox(
       width: width ?? double.infinity,
       height: height,
       child: OutlinedButton(
@@ -152,7 +152,7 @@ class SecondaryButton extends StatelessWidget {
 
   Widget _buildButtonContent() {
     if (isLoading) {
-      return Row(
+      return const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
@@ -165,7 +165,7 @@ class SecondaryButton extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Text('Please wait...'),
         ],
       );
@@ -285,7 +285,7 @@ class CompactButton extends StatelessWidget {
               )
             : Text(
                 text,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: AppConstants.captionFontSize,
                   fontWeight: FontWeight.w600,
                 ),

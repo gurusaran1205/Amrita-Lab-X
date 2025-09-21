@@ -95,25 +95,25 @@ class _OtpTextFieldState extends State<OtpTextField> {
             fillColor: widget.enabled
                 ? (_isFocused
                     ? AppColors.primaryMaroon.withAlpha(13)
-                    : Color(0xFFF5F5F5))
-                : Color(0xFFE0E0E0),
+                    : const Color(0xFFF5F5F5))
+                : const Color(0xFFE0E0E0),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: AppColors.inputBorder,
                 width: 1.5,
               ),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: AppColors.inputBorder,
                 width: 1.5,
               ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: AppColors.primaryMaroon,
                 width: 2,
               ),
@@ -136,7 +136,7 @@ class _OtpTextFieldState extends State<OtpTextField> {
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-              borderSide: BorderSide(
+              borderSide: const BorderSide(
                 color: Color(0xFFBDBDBD),
                 width: 1,
               ),
@@ -252,10 +252,10 @@ class _OtpBoxTextFieldState extends State<OtpBoxTextField> {
             decoration: InputDecoration(
               counterText: '',
               filled: true,
-              fillColor: widget.enabled ? Color(0xFFF5F5F5) : Color(0xFFE0E0E0),
+              fillColor: widget.enabled ? const Color(0xFFF5F5F5) : const Color(0xFFE0E0E0),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-                borderSide: BorderSide(color: AppColors.inputBorder),
+                borderSide: const BorderSide(color: AppColors.inputBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppConstants.defaultRadius),

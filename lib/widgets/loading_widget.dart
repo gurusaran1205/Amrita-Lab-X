@@ -134,7 +134,7 @@ class _AmritaLoadingIndicatorState extends State<AmritaLoadingIndicator>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
-        return Container(
+        return SizedBox(
           width: widget.size,
           height: widget.size,
           child: CircularProgressIndicator(
@@ -298,7 +298,7 @@ class _LoadingShimmerState extends State<LoadingShimmer>
                 highlightColor,
                 baseColor,
               ],
-              stops: [
+              stops: const [
                 0.0,
                 0.5,
                 1.0,
