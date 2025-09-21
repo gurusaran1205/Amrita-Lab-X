@@ -9,6 +9,8 @@ import '../widgets/custom_button.dart';
 import '../widgets/loading_widget.dart';
 import '../utils/colors.dart';
 import '../utils/constants.dart';
+// ignore: unused_import
+import '../utils/validators.dart';
 import '../widgets/otp_text_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {

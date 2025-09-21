@@ -58,4 +58,52 @@ class ApiService {
       throw Exception("Failed to load equipment");
     }
   }
+
+  // Add a new department
+  Future<bool> addDepartment(Department department) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/api/departments"),
+      headers: _headers,
+      body: json.encode(department.toJson()),
+    );
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      print("Failed to add department. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
+
+  // Add a new lab
+  Future<bool> addLab(Lab lab) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/api/labs"),
+      headers: _headers,
+      body: json.encode(lab.toJson()),
+    );
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      print("Failed to add lab. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
+
+  // Add new equipment
+  Future<bool> addEquipment(Equipment equipment) async {
+    final response = await http.post(
+      Uri.parse("$baseUrl/api/equipment"),
+      headers: _headers,
+      body: json.encode(equipment.toJson()),
+    );
+
+    if (response.statusCode == 201) {
+      return true;
+    } else {
+      print("Failed to add equipment. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
 }

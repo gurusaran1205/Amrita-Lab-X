@@ -70,15 +70,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (success) {
       _showSuccessToast('Login successful!');
-      _navigateToHome();
+      _navigateToDashboard(authProvider.user?.role);
     } else {
       _showErrorToast(authProvider.errorMessage ?? 'Login failed');
     }
   }
 
-  void _navigateToHome() {
-    // Navigate to success screen after successful login
-    Navigator.pushReplacementNamed(context, '/success');
+  void _navigateToDashboard(String? role) {
+    if (role == 'admin' || role == 'lab_staff') {
+      Navigator.pushReplacementNamed(context, '/lab_staff_dashboard');
+    } else {
+      Navigator.pushReplacementNamed(context, '/success');
+    }
   }
 
   void _navigateToSignup() {
