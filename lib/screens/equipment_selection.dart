@@ -1,12 +1,10 @@
-import 'package:amrita_ulabs/screens/calendar_screen.dart';
-import 'package:amrita_ulabs/screens/date_time_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/equipment_provider.dart';
 import '../models/department.dart';
 import '../models/lab.dart';
 import '../models/equipment.dart';
-import 'date_time_screen.dart';
+import 'availability_screen.dart';
 
 class EquipmentSelectionPage extends StatefulWidget {
   const EquipmentSelectionPage({super.key});
@@ -516,7 +514,7 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => BookingPage(
+                          builder: (_) => EquipmentAvailabilityPage(
                             equipmentId: provider.selectedEquipment!.id,
                           ),
                         ),

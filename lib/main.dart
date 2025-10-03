@@ -1,3 +1,4 @@
+import 'package:amrita_ulabs/providers/availability_provider.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_department_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/lab_staff_dashboard_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_lab_screen.dart';
@@ -38,6 +39,12 @@ class AmritaULabsApp extends StatelessWidget {
               EquipmentProvider(authProvider: auth),
         ),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, AvailabilityProvider>(
+          create: (context) => AvailabilityProvider(
+              authProvider: Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, prev) =>
+              AvailabilityProvider(authProvider: auth),
+        ),
       ],
       child: MaterialApp(
         title: AppConstants.appName,

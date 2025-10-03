@@ -70,7 +70,8 @@ class ApiService {
     if (response.statusCode == 201) {
       return true;
     } else {
-      print("Failed to add department. Status: ${response.statusCode}, Body: ${response.body}");
+      print(
+          "Failed to add department. Status: ${response.statusCode}, Body: ${response.body}");
       return false;
     }
   }
@@ -86,7 +87,8 @@ class ApiService {
     if (response.statusCode == 201) {
       return true;
     } else {
-      print("Failed to add lab. Status: ${response.statusCode}, Body: ${response.body}");
+      print(
+          "Failed to add lab. Status: ${response.statusCode}, Body: ${response.body}");
       return false;
     }
   }
@@ -102,8 +104,23 @@ class ApiService {
     if (response.statusCode == 201) {
       return true;
     } else {
-      print("Failed to add equipment. Status: ${response.statusCode}, Body: ${response.body}");
+      print(
+          "Failed to add equipment. Status: ${response.statusCode}, Body: ${response.body}");
       return false;
+    }
+  }
+
+  Future<bool> checkAvailability(String equipmentId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/equipment/$equipmentId/availability'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['available'] as bool;
+    } else {
+      throw Exception("Failed to fetch availability");
     }
   }
 }
