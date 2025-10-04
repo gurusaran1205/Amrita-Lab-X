@@ -56,7 +56,7 @@ class AvailabilityProvider with ChangeNotifier {
     debugPrint("📡 Booking slot at: $url");
 
     final body = jsonEncode({
-      "equipmentId": equipmentId,
+      "equipment": equipmentId,
       "startTime": start.toUtc().toIso8601String(),
       "endTime": end.toUtc().toIso8601String(),
       "purpose": purpose,
