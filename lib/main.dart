@@ -18,7 +18,6 @@ import 'screens/success_screen.dart';
 import 'providers/equipment_provider.dart';
 import 'screens/equipment_selection.dart';
 import 'screens/forgot_password_screen.dart';
-import 'providers/booking_provider.dart';
 
 void main() {
   runApp(const AmritaULabsApp());
@@ -38,7 +37,6 @@ class AmritaULabsApp extends StatelessWidget {
           update: (context, auth, prev) =>
               EquipmentProvider(authProvider: auth),
         ),
-        ChangeNotifierProvider(create: (_) => BookingProvider()),
         ChangeNotifierProxyProvider<AuthProvider, AvailabilityProvider>(
           create: (context) => AvailabilityProvider(
               authProvider: Provider.of<AuthProvider>(context, listen: false)),
