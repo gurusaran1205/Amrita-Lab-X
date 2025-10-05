@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../providers/equipment_provider.dart';
-import '../../widgets/app_header.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_button.dart';
 import '../../utils/colors.dart';
@@ -62,54 +61,50 @@ class _AddDepartmentScreenState extends State<AddDepartmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          const AppHeader(
-            subtitle: 'Add New Department',
-            showBackButton: true,
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppConstants.largePadding),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: AppConstants.largePadding * 2),
-                    CustomTextField(
-                      controller: _nameController,
-                      label: 'Department Name',
-                      hintText: 'e.g., Computer Science',
-                      prefixIcon: const Icon(Icons.business_outlined),
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Department name is required'
-                          : null,
-                    ),
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    CustomTextField(
-                      controller: _descriptionController,
-                      label: 'Description',
-                      hintText: 'A short description of the department',
-                      prefixIcon: const Icon(Icons.description_outlined),
-                      maxLines: 3,
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Description is required'
-                          : null,
-                    ),
-                    const SizedBox(height: AppConstants.largePadding * 2),
-                    PrimaryButton(
-                      text: 'Add Department',
-                      onPressed: _handleAddDepartment,
-                      isLoading: _isLoading,
-                    ),
-                  ],
-                ),
+      appBar: AppBar(
+        title: const Text('Add New Department'),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppConstants.largePadding),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: AppConstants.largePadding * 2),
+              CustomTextField(
+                controller: _nameController,
+                label: 'Department Name',
+                hintText: 'e.g., Computer Science',
+                prefixIcon: const Icon(Icons.business_outlined),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Department name is required'
+                    : null,
               ),
-            ),
+              const SizedBox(height: AppConstants.defaultPadding),
+              CustomTextField(
+                controller: _descriptionController,
+                label: 'Description',
+                hintText: 'A short description of the department',
+                prefixIcon: const Icon(Icons.description_outlined),
+                maxLines: 3,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Description is required'
+                    : null,
+              ),
+              const SizedBox(height: AppConstants.largePadding * 2),
+              PrimaryButton(
+                text: 'Add Department',
+                onPressed: _handleAddDepartment,
+                isLoading: _isLoading,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

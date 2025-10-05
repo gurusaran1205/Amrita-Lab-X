@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import '../../models/department.dart';
 import '../../providers/equipment_provider.dart';
-import '../../widgets/app_header.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../utils/colors.dart';
@@ -26,7 +25,6 @@ class _AddLabScreenState extends State<AddLabScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch departments if the list is empty
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<EquipmentProvider>();
       if (provider.departments.isEmpty) {
@@ -81,53 +79,49 @@ class _AddLabScreenState extends State<AddLabScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          const AppHeader(
-            subtitle: 'Add New Laboratory',
-            showBackButton: true,
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppConstants.largePadding),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: AppConstants.largePadding * 2),
-                    _buildDepartmentDropdown(),
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    CustomTextField(
-                      controller: _nameController,
-                      label: 'Lab Name',
-                      hintText: 'e.g., IoT Lab',
-                      prefixIcon: const Icon(Icons.science_outlined),
-                      validator: (value) =>
-                          value == null || value.isEmpty ? 'Lab name is required' : null,
-                    ),
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    CustomTextField(
-                      controller: _locationController,
-                      label: 'Location',
-                      hintText: 'e.g., AB1, Room 203',
-                      prefixIcon: const Icon(Icons.location_on_outlined),
-                      validator: (value) =>
-                          value == null || value.isEmpty ? 'Location is required' : null,
-                    ),
-                    const SizedBox(height: AppConstants.largePadding * 2),
-                    PrimaryButton(
-                      text: 'Add Lab',
-                      onPressed: _handleAddLab,
-                      isLoading: _isLoading,
-                    ),
-                  ],
-                ),
+      appBar: AppBar(
+        title: const Text('Add New Laboratory'),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppConstants.largePadding),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: AppConstants.largePadding * 2),
+              _buildDepartmentDropdown(),
+              const SizedBox(height: AppConstants.defaultPadding),
+              CustomTextField(
+                controller: _nameController,
+                label: 'Lab Name',
+                hintText: 'e.g., IoT Lab',
+                prefixIcon: const Icon(Icons.science_outlined),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Lab name is required' : null,
               ),
-            ),
+              const SizedBox(height: AppConstants.defaultPadding),
+              CustomTextField(
+                controller: _locationController,
+                label: 'Location',
+                hintText: 'e.g., AB1, Room 203',
+                prefixIcon: const Icon(Icons.location_on_outlined),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Location is required' : null,
+              ),
+              const SizedBox(height: AppConstants.largePadding * 2),
+              PrimaryButton(
+                text: 'Add Lab',
+                onPressed: _handleAddLab,
+                isLoading: _isLoading,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -146,7 +140,7 @@ class _AddLabScreenState extends State<AddLabScreen> {
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.headlineLarge,
         ),
-         const SizedBox(height: AppConstants.smallPadding),
+        const SizedBox(height: AppConstants.smallPadding),
         Text(
           'Assign the new lab to its parent department.',
           textAlign: TextAlign.center,
@@ -184,7 +178,8 @@ class _AddLabScreenState extends State<AddLabScreen> {
               _selectedDepartment = newValue;
             });
           },
-          validator: (value) => value == null ? 'Please select a department' : null,
+          validator: (value) =>
+              value == null ? 'Please select a department' : null,
         );
       },
     );

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../widgets/app_header.dart';
 import '../../utils/colors.dart';
 import '../../utils/constants.dart';
 
@@ -15,28 +14,23 @@ class LabStaffDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          const AppHeader(
-            subtitle: 'Lab Staff Dashboard',
+      // SafeArea ensures your UI is not obstructed by the system status bar (at the top)
+      // or the navigation bar (at the bottom on some devices).
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppConstants.defaultPadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // The large SizedBox has been removed. SafeArea handles the top space now.
+              if (user != null) _buildWelcomeCard(context, user.name),
+              const SizedBox(height: AppConstants.largePadding),
+              _buildDashboardGrid(context),
+              const SizedBox(height: AppConstants.largePadding),
+              _buildLogoutButton(context, authProvider),
+            ],
           ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppConstants.defaultPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (user != null)
-                    _buildWelcomeCard(context, user.name),
-                  const SizedBox(height: AppConstants.largePadding),
-                  _buildDashboardGrid(context),
-                  const SizedBox(height: AppConstants.largePadding),
-                  _buildLogoutButton(context, authProvider),
-                ],
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -134,7 +128,7 @@ class LabStaffDashboardScreen extends StatelessWidget {
           icon: Icons.qr_code_scanner,
           label: 'Generate QR',
           onTap: () {
-            // TODO: Navigate to generate QR screen
+            Navigator.pushNamed(context, '/qr_management');
           },
         ),
       ],

@@ -4,7 +4,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import '../../models/department.dart';
 import '../../models/lab.dart';
 import '../../providers/equipment_provider.dart';
-import '../../widgets/app_header.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../utils/colors.dart';
@@ -21,13 +20,10 @@ class _AddEquipmentScreenState extends State<AddEquipmentScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _modelNumberController = TextEditingController();
-  
-  // Removed the text controller for type
-  // final _typeController = TextEditingController();
 
   Department? _selectedDepartment;
   Lab? _selectedLab;
-  String? _selectedType; // New state variable for the dropdown
+  String? _selectedType;
   bool _isLoading = false;
   bool _isLabsLoading = false;
 
@@ -65,9 +61,9 @@ class _AddEquipmentScreenState extends State<AddEquipmentScreen> {
     final provider = context.read<EquipmentProvider>();
     final success = await provider.addEquipment(
       name: _nameController.text.trim(),
-      type: _selectedType!, // Use the value from the dropdown
+      type: _selectedType!,
       modelNumber: _modelNumberController.text.trim(),
-      description: '', // Not used in toJson, but required by model
+      description: '',
       labId: _selectedLab!.id,
     );
 
@@ -88,10 +84,10 @@ class _AddEquipmentScreenState extends State<AddEquipmentScreen> {
 
   void _onDepartmentChanged(Department? newDepartment) async {
     if (newDepartment == null) return;
-    
+
     setState(() {
       _selectedDepartment = newDepartment;
-      _selectedLab = null; 
+      _selectedLab = null;
       _isLabsLoading = true;
     });
 
@@ -107,56 +103,54 @@ class _AddEquipmentScreenState extends State<AddEquipmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Column(
-        children: [
-          const AppHeader(
-            subtitle: 'Add New Equipment',
-            showBackButton: true,
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppConstants.largePadding),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: AppConstants.largePadding * 2),
-                    _buildDepartmentDropdown(),
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    _buildLabDropdown(),
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    CustomTextField(
-                      controller: _nameController,
-                      label: 'Equipment Name',
-                      hintText: 'e.g., Oscilloscope',
-                      prefixIcon: const Icon(Icons.biotech_outlined),
-                      validator: (value) => value == null || value.isEmpty ? 'Name is required' : null,
-                    ),
-                    const SizedBox(height: AppConstants.defaultPadding),
-                    // This is the new Dropdown for Equipment Type
-                    _buildTypeDropdown(),
-                     const SizedBox(height: AppConstants.defaultPadding),
-                    CustomTextField(
-                      controller: _modelNumberController,
-                      label: 'Model Number',
-                      hintText: 'e.g., DSOX1204G',
-                      prefixIcon: const Icon(Icons.confirmation_number_outlined),
-                       validator: (value) => value == null || value.isEmpty ? 'Model number is required' : null,
-                    ),
-                    const SizedBox(height: AppConstants.largePadding * 2),
-                    PrimaryButton(
-                      text: 'Add Equipment',
-                      onPressed: _handleAddEquipment,
-                      isLoading: _isLoading,
-                    ),
-                  ],
-                ),
+      appBar: AppBar(
+        title: const Text('Add New Equipment'),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppConstants.largePadding),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: AppConstants.largePadding * 2),
+              _buildDepartmentDropdown(),
+              const SizedBox(height: AppConstants.defaultPadding),
+              _buildLabDropdown(),
+              const SizedBox(height: AppConstants.defaultPadding),
+              CustomTextField(
+                controller: _nameController,
+                label: 'Equipment Name',
+                hintText: 'e.g., Oscilloscope',
+                prefixIcon: const Icon(Icons.biotech_outlined),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Name is required' : null,
               ),
-            ),
+              const SizedBox(height: AppConstants.defaultPadding),
+              _buildTypeDropdown(),
+              const SizedBox(height: AppConstants.defaultPadding),
+              CustomTextField(
+                controller: _modelNumberController,
+                label: 'Model Number',
+                hintText: 'e.g., DSOX1204G',
+                prefixIcon: const Icon(Icons.confirmation_number_outlined),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Model number is required'
+                    : null,
+              ),
+              const SizedBox(height: AppConstants.largePadding * 2),
+              PrimaryButton(
+                text: 'Add Equipment',
+                onPressed: _handleAddEquipment,
+                isLoading: _isLoading,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -185,7 +179,6 @@ class _AddEquipmentScreenState extends State<AddEquipmentScreen> {
     );
   }
 
-  // New method to build the Equipment Type dropdown
   Widget _buildTypeDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedType,
@@ -200,7 +193,7 @@ class _AddEquipmentScreenState extends State<AddEquipmentScreen> {
       hint: const Text('Select a Type'),
       items: ['Major', 'Minor'].map((String type) {
         return DropdownMenuItem<String>(
-          value: type.toLowerCase(), // Send 'major' or 'minor' to backend
+          value: type.toLowerCase(),
           child: Text(type),
         );
       }).toList(),
@@ -237,19 +230,20 @@ class _AddEquipmentScreenState extends State<AddEquipmentScreen> {
             );
           }).toList(),
           onChanged: _onDepartmentChanged,
-          validator: (value) => value == null ? 'Please select a department' : null,
+          validator: (value) =>
+              value == null ? 'Please select a department' : null,
         );
       },
     );
   }
 
-    Widget _buildLabDropdown() {
+  Widget _buildLabDropdown() {
     return Consumer<EquipmentProvider>(
       builder: (context, provider, child) {
         if (_isLabsLoading) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (_selectedDepartment == null) {
           return DropdownButtonFormField<Lab>(
             decoration: InputDecoration(

@@ -70,8 +70,7 @@ class ApiService {
     if (response.statusCode == 201) {
       return true;
     } else {
-      print(
-          "Failed to add department. Status: ${response.statusCode}, Body: ${response.body}");
+      print("Failed to add department. Status: ${response.statusCode}, Body: ${response.body}");
       return false;
     }
   }
@@ -87,8 +86,7 @@ class ApiService {
     if (response.statusCode == 201) {
       return true;
     } else {
-      print(
-          "Failed to add lab. Status: ${response.statusCode}, Body: ${response.body}");
+      print("Failed to add lab. Status: ${response.statusCode}, Body: ${response.body}");
       return false;
     }
   }
@@ -104,23 +102,41 @@ class ApiService {
     if (response.statusCode == 201) {
       return true;
     } else {
-      print(
-          "Failed to add equipment. Status: ${response.statusCode}, Body: ${response.body}");
+      print("Failed to add equipment. Status: ${response.statusCode}, Body: ${response.body}");
       return false;
     }
   }
-
-  Future<bool> checkAvailability(String equipmentId) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/equipment/$equipmentId/availability'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+  
+  Future<String?> getLabEntranceQr(String labId) async {
+    final uri = Uri.parse("$baseUrl/api/labs/$labId/qrcode");
+    final response = await http.get(uri, headers: _headers);
 
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return data['available'] as bool;
+      return json.decode(response.body)['qrCodeDataURL'];
     } else {
-      throw Exception("Failed to fetch availability");
+      throw Exception('Failed to get lab entrance QR code');
+    }
+  }
+
+  Future<String?> getLabLogoutQr(String labId) async {
+    final uri = Uri.parse("$baseUrl/api/labs/$labId/logout-qrcode");
+    final response = await http.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body)['qrCodeDataURL'];
+    } else {
+      throw Exception('Failed to get lab logout QR code');
+    }
+  }
+
+  Future<String?> getEquipmentQr(String equipmentId) async {
+    final uri = Uri.parse("$baseUrl/api/equipment/$equipmentId/qrcode");
+    final response = await http.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body)['qrCodeDataURL'];
+    } else {
+      throw Exception('Failed to get equipment QR code');
     }
   }
 }

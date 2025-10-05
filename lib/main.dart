@@ -1,8 +1,12 @@
+// ignore_for_file: unused_import
+
 import 'package:amrita_ulabs/providers/availability_provider.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_department_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/lab_staff_dashboard_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_lab_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_equipment_screen.dart';
+import 'package:amrita_ulabs/providers/qr_provider.dart';
+import 'package:amrita_ulabs/screens/admin_screen/qr_management_screen.dart';
 import 'package:amrita_ulabs/screens/login_screen.dart';
 import 'package:amrita_ulabs/screens/main_navigation.dart';
 import 'package:amrita_ulabs/screens/my_bookings_screen.dart';
@@ -46,6 +50,18 @@ class AmritaULabsApp extends StatelessWidget {
           update: (context, auth, prev) =>
               AvailabilityProvider(authProvider: auth),
         ),
+        ChangeNotifierProxyProvider<AuthProvider, QrProvider>(
+          create: (context) => QrProvider(
+            authProvider: Provider.of<AuthProvider>(context, listen: false),
+          ),
+          update: (context, auth, prev) {
+            prev?.updateAuthProvider(auth);
+            return prev ??
+                QrProvider(
+                    authProvider:
+                        Provider.of<AuthProvider>(context, listen: false));
+          },
+        ),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
@@ -71,6 +87,7 @@ class AmritaULabsApp extends StatelessWidget {
           '/add_department': (context) => const AddDepartmentScreen(),
           '/add_lab': (context) => const AddLabScreen(),
           '/add_equipment': (context) => const AddEquipmentScreen(),
+          '/qr_management': (context) => const QrManagementScreen(),
         },
       ),
     );
