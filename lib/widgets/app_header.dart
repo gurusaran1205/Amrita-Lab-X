@@ -21,18 +21,22 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
     return Container(
-      height: height ?? 120,
       width: double.infinity,
       padding: padding ?? const EdgeInsets.symmetric(
         horizontal: AppConstants.defaultPadding,
         vertical: AppConstants.largePadding,
       ),
+      constraints: BoxConstraints(
+        minHeight: screenHeight*0.12,
+        maxHeight: screenHeight*0.20,
+      ),
       decoration: BoxDecoration(
         color: AppColors.white,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryMaroon.withOpacity(0.1),
+            color: AppColors.primaryMaroon.withAlpha((255 * 0.1).round()),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -40,6 +44,7 @@ class AppHeader extends StatelessWidget {
       ),
       child: SafeArea(
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

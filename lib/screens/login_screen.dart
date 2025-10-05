@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (role == 'admin' || role == 'lab_staff') {
       Navigator.pushReplacementNamed(context, '/lab_staff_dashboard');
     } else {
-      Navigator.pushReplacementNamed(context, '/success');
+      Navigator.pushReplacementNamed(context, '/main_navigation');
     }
   }
 
@@ -135,70 +135,74 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Form content - Make it scrollable and flexible
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding:
-                          const EdgeInsets.all(AppConstants.defaultPadding),
-                      physics: const ClampingScrollPhysics(),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: MediaQuery.of(context).size.height -
-                              MediaQuery.of(context).padding.top -
-                              kToolbarHeight -
-                              100, // Approximate header height
-                        ),
-                        child: IntrinsicHeight(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const SizedBox(
-                                  height: AppConstants.defaultPadding),
+                    child: LayoutBuilder(builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        padding:
+                            const EdgeInsets.all(AppConstants.defaultPadding),
+                        physics: const ClampingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: IntrinsicHeight(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const SizedBox(
+                                    height: AppConstants.defaultPadding),
 
-                              // Welcome message - Reduced spacing on mobile
-                              _buildWelcomeHeader(),
+                                // Welcome message - Reduced spacing on mobile
+                                _buildWelcomeHeader(),
 
-                              SizedBox(
-                                height: MediaQuery.of(context).size.height > 700
-                                    ? AppConstants.largePadding * 2
-                                    : AppConstants.largePadding,
-                              ),
+                                SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.height > 700
+                                          ? AppConstants.largePadding * 2
+                                          : AppConstants.largePadding,
+                                ),
 
-                              // Login form
-                              _buildLoginForm(authProvider),
+                                // Login form
+                                _buildLoginForm(authProvider),
 
-                              const SizedBox(height: AppConstants.largePadding),
+                                const SizedBox(
+                                    height: AppConstants.largePadding),
 
-                              // Error message
-                              if (authProvider.errorMessage != null)
-                                _buildErrorMessage(authProvider.errorMessage!),
+                                // Error message
+                                if (authProvider.errorMessage != null)
+                                  _buildErrorMessage(
+                                      authProvider.errorMessage!),
 
-                              const SizedBox(
-                                  height: AppConstants.defaultPadding),
+                                const SizedBox(
+                                    height: AppConstants.defaultPadding),
 
-                              // Login button
-                              PrimaryButton(
-                                text: 'Sign In',
-                                onPressed: _isFormValid ? _handleLogin : null,
-                                isLoading: authProvider.isLoading,
-                                isEnabled: _isFormValid,
-                              ),
+                                // Login button
+                                PrimaryButton(
+                                  text: 'Sign In',
+                                  onPressed:
+                                      _isFormValid ? _handleLogin : null,
+                                  isLoading: authProvider.isLoading,
+                                  isEnabled: _isFormValid,
+                                ),
 
-                              const SizedBox(height: AppConstants.largePadding),
+                                const SizedBox(
+                                    height: AppConstants.largePadding),
 
-                              // Forgot password link
-                              _buildForgotPasswordLink(),
+                                // Forgot password link
+                                _buildForgotPasswordLink(),
 
-                              const Spacer(), // Push footer to bottom
+                                const Spacer(), // Push footer to bottom
 
-                              // Footer text
-                              _buildFooterText(),
+                                // Footer text
+                                _buildFooterText(),
 
-                              const SizedBox(
-                                  height: AppConstants.defaultPadding),
-                            ],
+                                const SizedBox(
+                                    height: AppConstants.defaultPadding),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   ),
                 ],
               ),

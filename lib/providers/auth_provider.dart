@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -376,7 +378,7 @@ class AuthProvider with ChangeNotifier {
   Future<void> _saveUserToStorage(User user) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', user.toJson().toString());
+      await prefs.setString('user_data', jsonEncode(user.toJson()));
       if (user.token != null) {
         await prefs.setString('auth_token', user.token!);
       }
@@ -389,14 +391,14 @@ class AuthProvider with ChangeNotifier {
   Future<void> _loadUserFromStorage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final userData = prefs.getString('user_data');
+      final userDataString = prefs.getString('user_data');
       final authToken = prefs.getString('auth_token');
 
-      if (userData != null && authToken != null) {
-        // Note: In a real app, you would parse the JSON properly
-        // This is a simplified version
-        debugPrint('✅ User data found in storage');
-        // You might want to validate the token with the server here
+      if (userDataString != null && authToken != null) {
+        final userData = jsonDecode(userDataString);
+        _user = User.fromJson(userData);
+        _setState(AuthState.authenticated);
+        debugPrint('✅ User loaded from storage: ${_user!.email}');
       }
     } catch (e) {
       debugPrint('❌ Failed to load user from storage: $e');

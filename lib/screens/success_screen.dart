@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/equipment_provider.dart';
 import '../providers/auth_provider.dart';
-import '../widgets/app_header.dart';
 import '../widgets/custom_button.dart';
 import '../utils/colors.dart';
 import '../utils/constants.dart';
-import '../screens/equipment_selection.dart';
 
 class SuccessScreen extends StatelessWidget {
   const SuccessScreen({super.key});
@@ -21,11 +19,6 @@ class SuccessScreen extends StatelessWidget {
 
           return Column(
             children: [
-              // Header without back button
-              const AppHeader(
-                subtitle: 'Account Created Successfully',
-              ),
-
               // Content
               Expanded(
                 child: Padding(
@@ -111,12 +104,9 @@ class SuccessScreen extends StatelessWidget {
                           await equipmentProvider
                               .loadDepartments(); // ✅ only now, token exists
 
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const EquipmentSelectionPage(),
-                            ),
-                          );
+                          // Navigate to main_navigation instead of equipment selection
+                          Navigator.pushReplacementNamed(
+                              context, '/main_navigation');
                         },
                       ),
 

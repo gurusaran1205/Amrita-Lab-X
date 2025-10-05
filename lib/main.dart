@@ -4,6 +4,9 @@ import 'package:amrita_ulabs/screens/admin_screen/lab_staff_dashboard_screen.dar
 import 'package:amrita_ulabs/screens/admin_screen/add_lab_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_equipment_screen.dart';
 import 'package:amrita_ulabs/screens/login_screen.dart';
+import 'package:amrita_ulabs/screens/main_navigation.dart';
+import 'package:amrita_ulabs/screens/my_bookings_screen.dart';
+import 'package:amrita_ulabs/screens/qr_scanner_screen.dart';
 import 'package:amrita_ulabs/screens/reset_password_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -63,6 +66,9 @@ class AmritaULabsApp extends StatelessWidget {
             final email = (args is String) ? args : "";
             return ResetPasswordScreen(email: email);
           },
+          '/main_navigation': (context) => const MainNavigation(),
+          '/my_bookings': (context) => const MyBookingsScreen(),
+          '/qr_scanner': (context) => const QRScannerScreen(),
           '/lab_staff_dashboard': (context) => const LabStaffDashboardScreen(),
           '/add_department': (context) => const AddDepartmentScreen(),
           '/add_lab': (context) => const AddLabScreen(),
@@ -196,7 +202,7 @@ class AmritaULabsApp extends StatelessWidget {
       cardTheme: CardThemeData(
         color: AppColors.cardBackground,
         elevation: 4,
-        shadowColor: AppColors.primaryMaroon.withOpacity(0.1),
+        shadowColor: AppColors.primaryMaroon.withAlpha((255 * 0.1).round()),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.largeRadius),
         ),

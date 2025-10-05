@@ -103,7 +103,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   void _navigateToSuccess() {
-    // Navigate to success screen or main app
     Navigator.pushReplacementNamed(context, '/success');
   }
 
@@ -139,88 +138,90 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      resizeToAvoidBottomInset: true, // 👈 Prevent overflow when keyboard opens
       body: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           return LoadingOverlay(
             isLoading: authProvider.state == AuthState.otpVerifying,
             message: 'Verifying OTP...',
-            child: Column(
-              children: [
-                // Header with back button
-                AppHeader(
-                  subtitle: AppConstants.otpVerificationSubtitle,
-                  showBackButton: true,
-                  onBackPressed: () {
-                    authProvider.clearError();
-                    Navigator.pop(context);
-                  },
-                ),
+            child: SafeArea( // 👈 Protect from notches/status bar
+              child: SingleChildScrollView( // 👈 Makes the whole screen scrollable
+                child: Column(
+                  children: [
+                    // Header with back button
+                    AppHeader(
+                      subtitle: AppConstants.otpVerificationSubtitle,
+                      showBackButton: true,
+                      onBackPressed: () {
+                        authProvider.clearError();
+                        Navigator.pop(context);
+                      },
+                    ),
 
-                // Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: AppConstants.largePadding),
+                    Padding(
+                      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: AppConstants.largePadding),
 
-                        // Header with icon
-                        WelcomeHeader(
-                          title: AppConstants.otpVerificationTitle,
-                          subtitle:
-                              'We sent a 6-digit code to\n${authProvider.pendingEmail ?? 'your email'}',
-                          icon: Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryMaroon.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.email_outlined,
-                              size: 40,
-                              color: AppColors.primaryMaroon,
+                          // Header with icon
+                          WelcomeHeader(
+                            title: AppConstants.otpVerificationTitle,
+                            subtitle:
+                            'We sent a 6-digit code to\n${authProvider.pendingEmail ?? 'your email'}',
+                            icon: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryMaroon.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.email_outlined,
+                                size: 40,
+                                color: AppColors.primaryMaroon,
+                              ),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(height: AppConstants.largePadding * 2),
+                          const SizedBox(height: AppConstants.largePadding * 2),
 
-                        // OTP Input
-                        _buildOtpInput(),
+                          // OTP Input
+                          _buildOtpInput(),
 
-                        const SizedBox(height: AppConstants.largePadding),
+                          const SizedBox(height: AppConstants.largePadding),
 
-                        // Error message
-                        if (authProvider.errorMessage != null)
-                          _buildErrorMessage(authProvider.errorMessage!),
+                          // Error message
+                          if (authProvider.errorMessage != null)
+                            _buildErrorMessage(authProvider.errorMessage!),
 
-                        const SizedBox(height: AppConstants.defaultPadding),
+                          const SizedBox(height: AppConstants.defaultPadding),
 
-                        // Verify button
-                        PrimaryButton(
-                          text: 'Verify & Create Account',
-                          onPressed: _isOtpComplete ? _handleVerifyOtp : null,
-                          isLoading:
-                              authProvider.state == AuthState.otpVerifying,
-                          isEnabled: _isOtpComplete,
-                        ),
+                          // Verify button
+                          PrimaryButton(
+                            text: 'Verify & Create Account',
+                            onPressed: _isOtpComplete ? _handleVerifyOtp : null,
+                            isLoading:
+                            authProvider.state == AuthState.otpVerifying,
+                            isEnabled: _isOtpComplete,
+                          ),
 
-                        const SizedBox(height: AppConstants.largePadding),
+                          const SizedBox(height: AppConstants.largePadding),
 
-                        // Resend OTP section
-                        _buildResendSection(authProvider),
+                          // Resend OTP section
+                          _buildResendSection(authProvider),
 
-                        const SizedBox(height: AppConstants.largePadding),
+                          const SizedBox(height: AppConstants.largePadding),
 
-                        // Help text
-                        _buildHelpText(),
-                      ],
+                          // Help text
+                          _buildHelpText(),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         },
@@ -236,9 +237,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           Text(
             'Enter OTP Code',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: AppConstants.defaultPadding),
           PinCodeTextField(
@@ -251,23 +252,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textStyle: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
             pinTheme: PinTheme(
               shape: PinCodeFieldShape.box,
               borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
               fieldHeight: 60,
               fieldWidth: 50,
               borderWidth: 2,
-
-              // Colors
               activeColor: AppColors.primaryMaroon,
               selectedColor: AppColors.primaryMaroon,
               inactiveColor: AppColors.inputBorder,
               errorBorderColor: AppColors.error,
-
-              // Fill colors
               activeFillColor: AppColors.inputFill,
               selectedFillColor: AppColors.primaryMaroon.withOpacity(0.1),
               inactiveFillColor: AppColors.inputFill,
@@ -312,8 +309,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             child: Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.error,
-                  ),
+                color: AppColors.error,
+              ),
             ),
           ),
         ],
@@ -329,8 +326,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         Text(
           'Didn\'t receive the code?',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+            color: AppColors.textSecondary,
+          ),
         ),
         const SizedBox(height: 8),
         if (canResend)
@@ -343,9 +340,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           Text(
             'Resend in ${_formatTime(_resendCountdown)}',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.w500,
-                ),
+              color: AppColors.textLight,
+              fontWeight: FontWeight.w500,
+            ),
           ),
       ],
     );
@@ -375,19 +372,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 Text(
                   'Having trouble?',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.info,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: AppColors.info,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '• Check your spam/junk folder\n'
-                  '• Make sure you entered the correct email\n'
-                  '• OTP expires in 10 minutes',
+                      '• Make sure you entered the correct email\n'
+                      '• OTP expires in 10 minutes',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                      ),
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
                 ),
               ],
             ),

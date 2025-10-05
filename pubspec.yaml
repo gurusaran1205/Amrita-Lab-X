@@ -11,18 +11,19 @@ dependencies:
   flutter:
     sdk: flutter
   table_calendar: ^3.0.9
-  
+
   # State Management
   provider: ^6.1.1
-  
+  mobile_scanner: ^5.1.0
+
   # HTTP Requests
   http: ^1.1.2
-  
+
   # UI Components
   flutter_svg: ^2.0.9
   google_fonts: ^6.1.0
   pin_code_fields: ^8.0.1
-  
+
   # Storage & Utils
   shared_preferences: ^2.2.2
   fluttertoast: ^8.2.4
@@ -32,14 +33,24 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.1
+  flutter_native_splash: ^2.4.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter_native_splash:
+  color: "#FFA412"
+  image: "assets/images/splash.png"
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
 
 flutter:
   uses-material-design: true
-  
-  # assets:
-  #   # - assets/images/
-  #   # - assets/icons/
-  
+
+  assets:
+    - assets/images/
+
   fonts:
     - family: AmritaCustom
       fonts:
