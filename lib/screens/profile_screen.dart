@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../utils/colors.dart';
-import 'forgot_password_screen.dart';
 
 /// Profile screen with user info and settings
 class ProfileScreen extends StatelessWidget {
@@ -89,7 +88,8 @@ class ProfileScreen extends StatelessWidget {
                         end: Alignment.bottomRight,
                         colors: [
                           AppColors.primaryMaroon,
-                          AppColors.primaryMaroon.withAlpha((255 * 0.7).round()),
+                          AppColors.primaryMaroon
+                              .withAlpha((255 * 0.7).round()),
                         ],
                       ),
                     ),
@@ -147,7 +147,8 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.primaryMaroon.withAlpha((255 * 0.1).round()),
                   borderRadius: BorderRadius.circular(20),
@@ -269,7 +270,8 @@ class ProfileScreen extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const EditProfileScreen()),
                   );
                 },
               ),
@@ -295,9 +297,10 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.help_outline,
                 title: 'Help & FAQ',
                 onTap: () {
-                   Navigator.push(
+                  Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const HelpFaqScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const HelpFaqScreen()),
                   );
                 },
               ),
@@ -312,9 +315,10 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.policy_outlined,
                 title: 'Privacy Policy',
                 onTap: () {
-                   Navigator.push(
+                  Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const PrivacyPolicyScreen()),
                   );
                 },
               ),
@@ -395,7 +399,8 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.error.withAlpha((255 * 0.3).round())),
+        border:
+            Border.all(color: AppColors.error.withAlpha((255 * 0.3).round())),
       ),
       child: InkWell(
         onTap: () => _showLogoutDialog(context),
