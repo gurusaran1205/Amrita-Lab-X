@@ -88,7 +88,7 @@ class LabStaffDashboardScreen extends StatelessWidget {
           icon: Icons.approval,
           label: 'Approve Requests',
           onTap: () {
-            // TODO: Navigate to block users screen
+            Navigator.pushNamed(context, '/approve_requests');
           },
         ),
         _buildDashboardItem(
