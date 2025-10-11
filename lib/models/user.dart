@@ -5,6 +5,7 @@ class User {
   final String email;
   final String role;
   final String? token;
+  final bool isBlocked;
   final DateTime? createdAt;
 
   const User({
@@ -13,6 +14,7 @@ class User {
     required this.email,
     this.role = 'user',
     this.token,
+    required this.isBlocked, // ADD THIS LINE
     this.createdAt,
   });
 
@@ -24,6 +26,7 @@ class User {
       email: json['email'] as String? ?? '',
       role: json['role'] as String? ?? 'user',
       token: json['token'] as String?,
+      isBlocked: json['isBlocked'] as bool? ?? false, // ADD THIS LINE with a default value
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
           : null,
@@ -38,6 +41,7 @@ class User {
       'email': email,
       'role': role,
       'token': token,
+      'isBlocked': isBlocked, // ADD THIS LINE
       'createdAt': createdAt?.toIso8601String(),
     };
   }
@@ -49,6 +53,7 @@ class User {
     String? email,
     String? role,
     String? token,
+    bool? isBlocked, // ADD THIS LINE
     DateTime? createdAt,
   }) {
     return User(
@@ -57,13 +62,14 @@ class User {
       email: email ?? this.email,
       role: role ?? this.role,
       token: token ?? this.token,
+      isBlocked: isBlocked ?? this.isBlocked, // ADD THIS LINE
       createdAt: createdAt ?? this.createdAt,
     );
   }
 
   @override
   String toString() {
-    return 'User{id: $id, name: $name, email: $email, role: $role}';
+    return 'User{id: $id, name: $name, email: $email, role: $role, isBlocked: $isBlocked}'; // UPDATE THIS LINE
   }
 
   @override
@@ -74,11 +80,12 @@ class User {
         other.name == name &&
         other.email == email &&
         other.role == role &&
+        other.isBlocked == isBlocked && // ADD THIS LINE
         other.token == token;
   }
 
   @override
   int get hashCode {
-    return Object.hash(id, name, email, role, token);
+    return Object.hash(id, name, email, role, token, isBlocked); // UPDATE THIS LINE
   }
 }
