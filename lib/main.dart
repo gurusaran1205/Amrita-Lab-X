@@ -2,8 +2,10 @@
 
 import 'package:amrita_ulabs/providers/availability_provider.dart';
 import 'package:amrita_ulabs/providers/booking_provider.dart';
+import 'package:amrita_ulabs/providers/user_provider.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_department_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/approve_requests_screen.dart';
+import 'package:amrita_ulabs/screens/admin_screen/block_users_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/lab_staff_dashboard_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_lab_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_equipment_screen.dart';
@@ -70,6 +72,12 @@ class AmritaULabsApp extends StatelessWidget {
           ),
           update: (context, auth, _) => BookingProvider(authProvider: auth),
         ),
+        ChangeNotifierProxyProvider<AuthProvider, UserProvider>(
+          create: (context) => UserProvider(
+            authProvider: Provider.of<AuthProvider>(context, listen: false),
+          ),
+          update: (context, auth, _) => UserProvider(authProvider: auth),
+        ),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
@@ -97,6 +105,7 @@ class AmritaULabsApp extends StatelessWidget {
           '/add_equipment': (context) => const AddEquipmentScreen(),
           '/qr_management': (context) => const QrManagementScreen(),
           '/approve_requests': (context) => const ApproveRequestsScreen(),
+          '/block_users': (context) => const BlockUsersScreen(),
         },
       ),
     );
