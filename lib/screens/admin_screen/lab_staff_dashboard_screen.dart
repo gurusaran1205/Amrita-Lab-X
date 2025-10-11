@@ -120,7 +120,7 @@ class LabStaffDashboardScreen extends StatelessWidget {
           icon: Icons.block,
           label: 'Block Users',
           onTap: () {
-            // TODO: Navigate to block users screen
+            Navigator.pushNamed(context, '/block_users');
           },
         ),
         _buildDashboardItem(
