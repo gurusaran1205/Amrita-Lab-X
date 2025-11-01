@@ -10,11 +10,20 @@ class AppConstants {
       'http://107.21.163.19'; // Replace with actual URL
   static const String sendOtpEndpoint = '/api/auth/send-otp';
   static const String signupEndpoint = '/api/auth/signup';
+  static const String loginEndpoint = '/api/auth/login';
   static const String departmentsEndpoint = "/departments";
   static const String labsByDepartmentEndpoint = "/labs"; // /labs/{deptId}
   static const String equipmentsByLabEndpoint = "/equipments";
   static const String forgotPasswordEndpoint = "/api/auth/forgot-password";
   static const String resetPasswordEndpoint = "/api/auth/reset-password";
+
+  // Booking Endpoints
+  static const String bookingsEndpoint = '/api/bookings';
+  static const String myBookingsEndpoint = '/api/bookings/my-bookings';
+  static const String bookingsByEquipmentEndpoint = '/api/bookings/equipment';
+  static const String pendingBookingsEndpoint = '/api/bookings/pending';
+  static const String updateBookingStatusEndpoint = '/api/bookings'; // + /{id}/status
+
   // API Timeouts
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
@@ -62,40 +71,30 @@ class AppConstants {
   static const String invalidName = 'Please enter your full name.';
   static const String invalidOtp = 'Please enter a valid 6-digit OTP.';
   static const String userNotFound = 'User not found';
+  static const String unauthorized = "Unauthorized access";
+  static const String unknownError =
+      "Something went wrong, please try again later";
+  static const String invalidCredentials = 'Invalid email or password';
+  static const String loginFailed = 'Login failed. Please try again.';
 
   // Success Messages
   static const String otpSent = 'OTP has been sent to your email.';
   static const String signupSuccess = 'Account created successfully!';
+  static const String loginSuccess = 'Login successful!';
   static const String forgotPasswordTitle = "Forgot Password";
   static const String forgotPasswordSubtitle =
       "Enter your email to receive an OTP";
   static const String forgotPasswordOtpSent = "OTP has been sent to your email";
-
   static const String resetPasswordTitle = "Reset Password";
   static const String resetPasswordSubtitle = "Enter OTP and your new password";
   static const String passwordResetSuccess = "Password reset successful!";
 
   // Brand Messages
   static const String welcomeMessage = 'Welcome to AmritaULABS';
+  static const String welcomeBackMessage = 'Welcome Back!';
   static const String signupSubtitle = 'Create your account to get started';
+  static const String loginSubtitle = 'Sign in to your account';
   static const String otpVerificationTitle = 'Verify Your Email';
   static const String otpVerificationSubtitle =
       'Enter the 6-digit code sent to your email';
-
-  // Add these constants to your existing AppConstants class
-
-// API Endpoints (add to existing endpoints)
-  static const String loginEndpoint = '/api/auth/login';
-
-// Brand Messages (add to existing messages)
-  static const String welcomeBackMessage = 'Welcome Back!';
-  static const String loginSubtitle = 'Sign in to your account';
-  static const String loginSuccess = 'Login successful!';
-  static const String unauthorized = "Unauthorized access";
-  static const String unknownError =
-      "Something went wrong, please try again later";
-
-// Error Messages (add to existing error messages)
-  static const String invalidCredentials = 'Invalid email or password';
-  static const String loginFailed = 'Login failed. Please try again.';
 }

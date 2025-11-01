@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
+import '../providers/booking_provider.dart';
+import '../models/booking.dart';
 import '../utils/colors.dart';
 
 /// Professional home screen for AmritaULABS
@@ -12,22 +15,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch initial data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshData();
+    });
+  }
+
   // Method to handle pull-to-refresh
   Future<void> _refreshData() async {
-    // Simulate a network request for now
-    await Future.delayed(const Duration(seconds: 2));
+    // Fetch real data from providers
+    await Provider.of<BookingProvider>(context, listen: false).fetchMyBookings();
 
-    // In a real app, you would re-fetch your data from your services
-    // For example:
-    // await Provider.of<BookingProvider>(context, listen: false).fetchRecentBookings();
-    // await Provider.of<LabProvider>(context, listen: false).fetchLabAvailability();
-
-    // Show a confirmation message
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Data refreshed successfully!'),
           backgroundColor: AppColors.success,
+          duration: Duration(seconds: 2),
         ),
       );
     }
@@ -53,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 24),
                     _buildSloganCard(context),
                     const SizedBox(height: 24),
-                    _buildLabStatus(context),
+                    _buildRecentBookings(context),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -84,7 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
               builder: (context, authProvider, child) {
                 final user = authProvider.user;
 
-                // Show welcome message only when expanded
                 if (isExpanded) {
                   return Column(
                     mainAxisSize: MainAxisSize.min,
@@ -114,7 +120,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   );
                 } else {
-                  // Show normal app title when collapsed
                   return const Text(
                     'AmritaULABS',
                     style: TextStyle(
@@ -314,7 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildLabStatus(BuildContext context) {
+  Widget _buildRecentBookings(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -346,24 +351,44 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildBookingStatusCard('Oscilloscope', 'Electronics Lab', 'Oct 04, 2025', '10:00 AM', true),
-          const SizedBox(height: 12),
-          _buildBookingStatusCard('Arduino Kit', 'IoT Lab', 'Oct 03, 2025', '02:00 PM', false),
-          const SizedBox(height: 12),
-          _buildBookingStatusCard('Multimeter', 'Physics Lab', 'Oct 02, 2025', '11:30 AM', false),
+          Consumer<BookingProvider>(
+            builder: (context, bookingProvider, child) {
+              if (bookingProvider.isLoading && bookingProvider.myBookings.isEmpty) {
+                return const Center(child: CircularProgressIndicator(color: AppColors.primaryMaroon));
+              }
+
+              if (bookingProvider.errorMessage != null) {
+                return Center(child: Text(bookingProvider.errorMessage!));
+              }
+
+              if (bookingProvider.myBookings.isEmpty) {
+                return const Center(child: Text('No recent bookings found.'));
+              }
+
+              // Take the first 3 bookings
+              final recentBookings = bookingProvider.myBookings.take(3).toList();
+
+              return Column(
+                children: recentBookings.map((booking) {
+                  return _buildBookingStatusCard(booking);
+                }).toList(),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBookingStatusCard(
-      String equipment,
-      String lab,
-      String date,
-      String time,
-      bool isActive,
-      ) {
+  Widget _buildBookingStatusCard(Booking booking) {
+    final date = DateFormat('MMM dd, yyyy').format(booking.startTime);
+    final time = DateFormat('hh:mm a').format(booking.startTime);
+    bool isActive = booking.status.toLowerCase() == 'confirmed' &&
+        booking.startTime.isBefore(DateTime.now()) &&
+        booking.endTime.isAfter(DateTime.now());
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -397,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  equipment,
+                  booking.equipment.name,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -414,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      lab,
+                      booking.equipment.labId,
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -452,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              isActive ? 'Active' : 'Completed',
+              isActive ? 'Active' : booking.status,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

@@ -58,10 +58,32 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
+    final userJson = json['user'];
+    BookingUserInfo user;
+
+    if (userJson is String) {
+      user = BookingUserInfo(id: userJson, name: 'User', email: ''); 
+    } else if (userJson is Map<String, dynamic>) {
+      user = BookingUserInfo.fromJson(userJson);
+    } else {
+      user = BookingUserInfo(id: '', name: 'Invalid User', email: '');
+    }
+
+    final equipmentJson = json['equipment'];
+    BookingEquipmentInfo equipment;
+    if (equipmentJson is Map<String, dynamic>) {
+        equipment = BookingEquipmentInfo.fromJson(equipmentJson);
+    } else if (equipmentJson is String) {
+        equipment = BookingEquipmentInfo(id: equipmentJson, name: 'Unknown Equipment', labId: '');
+    }
+    else {
+        equipment = BookingEquipmentInfo(id: '', name: 'Invalid Equipment', labId: '');
+    }
+
     return Booking(
       id: json['_id'],
-      user: BookingUserInfo.fromJson(json['user']),
-      equipment: BookingEquipmentInfo.fromJson(json['equipment']),
+      user: user,
+      equipment: equipment,
       startTime: DateTime.parse(json['startTime']),
       endTime: DateTime.parse(json['endTime']),
       status: json['status'],

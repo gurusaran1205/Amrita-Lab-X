@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../utils/colors.dart';
+import '../providers/booking_provider.dart';
+import '../models/booking.dart';
 
-/// My Bookings screen showing all user bookings
+/// My Bookings screen showing all user bookings with real API integration
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
 
@@ -17,6 +21,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    // Fetch bookings when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BookingProvider>().fetchMyBookings();
+    });
   }
 
   @override
@@ -40,6 +49,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: AppColors.primaryMaroon),
+            onPressed: () {
+              context.read<BookingProvider>().refreshBookings();
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.primaryMaroon,
@@ -57,31 +74,99 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Consumer<BookingProvider>(
+        builder: (context, bookingProvider, child) {
+          if (bookingProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.primaryMaroon,
+              ),
+            );
+          }
+
+          if (bookingProvider.errorMessage != null) {
+            return _buildErrorState(bookingProvider.errorMessage!);
+          }
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildBookingsList(bookingProvider.activeBookings, 'active'),
+              _buildBookingsList(bookingProvider.upcomingBookings, 'upcoming'),
+              _buildBookingsList(bookingProvider.historyBookings, 'history'),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildBookingsList('active'),
-          _buildBookingsList('upcoming'),
-          _buildBookingsList('history'),
+          const Icon(
+            Icons.error_outline,
+            size: 80,
+            color: AppColors.error,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Error',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              context.read<BookingProvider>().refreshBookings();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryMaroon,
+              foregroundColor: AppColors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+            ),
+            child: const Text('Retry'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBookingsList(String type) {
-    // Mock data - replace with actual API data
-    final bookings = _getMockBookings(type);
-
+  Widget _buildBookingsList(List<Booking> bookings, String type) {
     if (bookings.isEmpty) {
       return _buildEmptyState(type);
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: bookings.length,
-      itemBuilder: (context, index) {
-        return _buildBookingItem(bookings[index], type);
-      },
+    return RefreshIndicator(
+      onRefresh: () => context.read<BookingProvider>().refreshBookings(),
+      color: AppColors.primaryMaroon,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: bookings.length,
+        itemBuilder: (context, index) {
+          return _buildBookingItem(bookings[index], type);
+        },
+      ),
     );
   }
 
@@ -134,7 +219,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     );
   }
 
-  Widget _buildBookingItem(Map<String, dynamic> booking, String type) {
+  Widget _buildBookingItem(Booking booking, String type) {
+    final dateFormat = DateFormat('MMM dd, yyyy');
+    final timeFormat = DateFormat('hh:mm a');
+    final duration = booking.endTime.difference(booking.startTime);
+    final durationText = '${duration.inHours}h ${duration.inMinutes % 60}m';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -176,7 +266,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            booking['equipment'],
+                            booking.equipment.name,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -193,7 +283,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                booking['lab'],
+                                'Lab ID: ${booking.equipment.labId}',
                                 style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
@@ -204,7 +294,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                         ],
                       ),
                     ),
-                    _buildStatusBadge(booking['status']),
+                    _buildStatusBadge(booking.status),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -216,30 +306,37 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                       child: _buildInfoItem(
                         Icons.calendar_today_outlined,
                         'Date',
-                        booking['date'],
+                        dateFormat.format(booking.startTime),
                       ),
                     ),
                     Expanded(
                       child: _buildInfoItem(
                         Icons.access_time,
                         'Time',
-                        booking['time'],
+                        '${timeFormat.format(booking.startTime)} - ${timeFormat.format(booking.endTime)}',
                       ),
                     ),
                   ],
                 ),
-                if (booking['duration'] != null) ...[
+                const SizedBox(height: 12),
+                _buildInfoItem(
+                  Icons.timelapse,
+                  'Duration',
+                  durationText,
+                ),
+                if (booking.purpose.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   _buildInfoItem(
-                    Icons.timelapse,
-                    'Duration',
-                    booking['duration'],
+                    Icons.notes,
+                    'Purpose',
+                    booking.purpose,
                   ),
                 ],
               ],
             ),
           ),
-          if (type == 'active') _buildActionButtons(),
+          if (type == 'active' && booking.status.toLowerCase() != 'cancelled')
+            _buildActionButtons(booking),
         ],
       ),
     );
@@ -247,18 +344,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 
   Widget _buildStatusBadge(String status) {
     Color color;
+    String displayStatus = status;
+
     switch (status.toLowerCase()) {
-      case 'active':
+      case 'confirmed':
         color = AppColors.success;
+        displayStatus = 'Active';
         break;
-      case 'upcoming':
-        color = AppColors.info;
+      case 'pending':
+        color = AppColors.warning;
+        displayStatus = 'Pending';
         break;
       case 'completed':
         color = AppColors.mediumGray;
+        displayStatus = 'Completed';
         break;
       case 'cancelled':
         color = AppColors.error;
+        displayStatus = 'Cancelled';
         break;
       default:
         color = AppColors.mediumGray;
@@ -271,7 +374,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        status,
+        displayStatus,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -283,34 +386,37 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
 
   Widget _buildInfoItem(IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: 16, color: AppColors.textSecondary),
         const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textLight,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textLight,
+                ),
               ),
-            ),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(Booking booking) {
     return Container(
       decoration: const BoxDecoration(
         border: Border(
@@ -322,7 +428,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           Expanded(
             child: TextButton(
               onPressed: () {
-                // Show QR code
+                _showQRCode(booking);
               },
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -342,7 +448,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           Expanded(
             child: TextButton(
               onPressed: () {
-                _showCancelDialog();
+                _showCancelDialog(booking);
               },
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.error,
@@ -362,7 +468,51 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     );
   }
 
-  void _showCancelDialog() {
+  void _showQRCode(Booking booking) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Booking QR Code'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // TODO: Generate actual QR code with booking ID
+            Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.divider),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Center(
+                child: Icon(
+                  Icons.qr_code,
+                  size: 150,
+                  color: AppColors.textLight,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Booking ID: ${booking.id}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelDialog(Booking booking) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -376,15 +526,28 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
             child: const Text('No, Keep It'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              // TODO: Implement cancel booking API call
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Booking cancelled successfully'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
+
+              final success = await context.read<BookingProvider>().cancelBooking(booking.id);
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? 'Booking cancelled successfully'
+                          : 'Failed to cancel booking',
+                    ),
+                    backgroundColor: success ? AppColors.success : AppColors.error,
+                  ),
+                );
+
+                if (success) {
+                  // Refresh the bookings list
+                  context.read<BookingProvider>().refreshBookings();
+                }
+              }
             },
             style: TextButton.styleFrom(
               foregroundColor: AppColors.error,
@@ -394,70 +557,5 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         ],
       ),
     );
-  }
-
-  List<Map<String, dynamic>> _getMockBookings(String type) {
-    // Replace with actual API data
-    switch (type) {
-      case 'active':
-        return [
-          {
-            'equipment': 'Oscilloscope',
-            'lab': 'Electronics Lab',
-            'date': 'Oct 04, 2025',
-            'time': '10:00 AM - 12:00 PM',
-            'duration': '2 hours',
-            'status': 'Active',
-          },
-        ];
-      case 'upcoming':
-        return [
-          {
-            'equipment': 'Arduino Kit',
-            'lab': 'IoT Lab',
-            'date': 'Oct 05, 2025',
-            'time': '02:00 PM - 04:00 PM',
-            'duration': '2 hours',
-            'status': 'Upcoming',
-          },
-          {
-            'equipment': 'Raspberry Pi',
-            'lab': 'Computer Lab',
-            'date': 'Oct 06, 2025',
-            'time': '11:00 AM - 01:00 PM',
-            'duration': '2 hours',
-            'status': 'Upcoming',
-          },
-        ];
-      case 'history':
-        return [
-          {
-            'equipment': 'Multimeter',
-            'lab': 'Physics Lab',
-            'date': 'Oct 02, 2025',
-            'time': '11:30 AM - 01:30 PM',
-            'duration': '2 hours',
-            'status': 'Completed',
-          },
-          {
-            'equipment': 'Function Generator',
-            'lab': 'Electronics Lab',
-            'date': 'Oct 01, 2025',
-            'time': '03:00 PM - 05:00 PM',
-            'duration': '2 hours',
-            'status': 'Completed',
-          },
-          {
-            'equipment': 'Spectrum Analyzer',
-            'lab': 'Communication Lab',
-            'date': 'Sep 28, 2025',
-            'time': '10:00 AM - 12:00 PM',
-            'duration': '2 hours',
-            'status': 'Completed',
-          },
-        ];
-      default:
-        return [];
-    }
   }
 }
