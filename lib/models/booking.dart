@@ -58,9 +58,20 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
+    BookingUserInfo userInfo;
+    if (json['user'] is String) {
+      userInfo = BookingUserInfo(
+        id: json['user'],
+        name: 'Current User', // Placeholder as API only returns ID
+        email: '',
+      );
+    } else {
+      userInfo = BookingUserInfo.fromJson(json['user']);
+    }
+
     return Booking(
       id: json['_id'],
-      user: BookingUserInfo.fromJson(json['user']),
+      user: userInfo,
       equipment: BookingEquipmentInfo.fromJson(json['equipment']),
       startTime: DateTime.parse(json['startTime']),
       endTime: DateTime.parse(json['endTime']),

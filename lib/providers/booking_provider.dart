@@ -47,6 +47,36 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
+  List<Booking> _myBookings = [];
+  List<Booking> get myBookings => _myBookings;
+
+  Future<void> fetchMyBookings() async {
+    debugPrint("--- BOOKING PROVIDER: Attempting to fetch my bookings ---");
+    
+    if (authProvider.token == null || authProvider.token!.isEmpty) {
+      _errorMessage = "Authentication error: Not logged in.";
+      notifyListeners();
+      return;
+    }
+    
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      debugPrint("--- BOOKING PROVIDER: Calling ApiService.fetchMyBookings... ---");
+      _myBookings = await _apiService.fetchMyBookings();
+      debugPrint("--- BOOKING PROVIDER: Fetched ${_myBookings.length} bookings ---");
+    } catch (e, stackTrace) {
+      debugPrint("❌ Error fetching my bookings: $e");
+      debugPrint("Stack trace: $stackTrace");
+      _errorMessage = "Failed to load my bookings: $e";
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> updateBookingStatus(String bookingId, String status) async {
     if (authProvider.token == null || authProvider.token!.isEmpty) {
       _errorMessage = "Authentication error: Not logged in.";

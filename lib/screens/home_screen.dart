@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/booking_provider.dart';
+import '../models/booking.dart';
+import 'package:intl/intl.dart';
 import '../utils/colors.dart';
 
 /// Professional home screen for AmritaULABS
@@ -13,21 +16,17 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // Method to handle pull-to-refresh
+  // Method to handle pull-to-refresh
   Future<void> _refreshData() async {
-    // Simulate a network request for now
-    await Future.delayed(const Duration(seconds: 2));
+    // Fetch real data from providers
+    await Provider.of<BookingProvider>(context, listen: false).fetchMyBookings();
 
-    // In a real app, you would re-fetch your data from your services
-    // For example:
-    // await Provider.of<BookingProvider>(context, listen: false).fetchRecentBookings();
-    // await Provider.of<LabProvider>(context, listen: false).fetchLabAvailability();
-
-    // Show a confirmation message
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Data refreshed successfully!'),
           backgroundColor: AppColors.success,
+          duration: Duration(seconds: 2),
         ),
       );
     }
@@ -53,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 24),
                     _buildSloganCard(context),
                     const SizedBox(height: 24),
-                    _buildLabStatus(context),
+                    _buildRecentBookings(context),
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -127,26 +126,132 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
             ),
-            background: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primaryMaroon,
-                    AppColors.primaryMaroon.withAlpha((255 * 0.85).round()),
-                  ],
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primaryMaroon,
+                        AppColors.primaryMaroon.withAlpha((255 * 0.85).round()),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+                Positioned(
+                  top: 60, // Positioned below the toolbar
+                  right: 20,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        // Show confirmation dialog
+                        final shouldLogout = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Logout'),
+                            content: const Text('Are you sure you want to logout?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text(
+                                  'Logout',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (shouldLogout == true && context.mounted) {
+                          await Provider.of<AuthProvider>(context, listen: false).logout();
+                          if (context.mounted) {
+                            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                          }
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(50),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withAlpha(80),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.logout_rounded,
+                              color: AppColors.white.withAlpha(230),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Logout',
+                              style: TextStyle(
+                                color: AppColors.white.withAlpha(230),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: AppColors.white),
-          onPressed: () {
-            // TODO: Navigate to notifications
+        StreamBuilder(
+          stream: Stream.periodic(const Duration(seconds: 1)),
+          builder: (context, snapshot) {
+            final now = DateTime.now();
+            final time = DateFormat('hh:mm a').format(now);
+            final date = DateFormat('EEE, MMM d').format(now);
+            return Padding(
+              padding: const EdgeInsets.only(right: 20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    time,
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    date,
+                    style: TextStyle(
+                      color: AppColors.white.withAlpha((255 * 0.9).round()),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+            );
           },
         ),
         const SizedBox(width: 4),
@@ -314,7 +419,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildLabStatus(BuildContext context) {
+  Widget _buildRecentBookings(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -346,24 +451,49 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          _buildBookingStatusCard('Oscilloscope', 'Electronics Lab', 'Oct 04, 2025', '10:00 AM', true),
-          const SizedBox(height: 12),
-          _buildBookingStatusCard('Arduino Kit', 'IoT Lab', 'Oct 03, 2025', '02:00 PM', false),
-          const SizedBox(height: 12),
-          _buildBookingStatusCard('Multimeter', 'Physics Lab', 'Oct 02, 2025', '11:30 AM', false),
+          Consumer<BookingProvider>(
+            builder: (context, bookingProvider, child) {
+              if (bookingProvider.isLoading && bookingProvider.myBookings.isEmpty) {
+                return const Center(child: CircularProgressIndicator(color: AppColors.primaryMaroon));
+              }
+
+              if (bookingProvider.errorMessage != null) {
+                return Center(child: Text(bookingProvider.errorMessage!));
+              }
+
+              if (bookingProvider.myBookings.isEmpty) {
+                return const Center(child: Text('No recent bookings found.'));
+              }
+
+              // Take the first 3 bookings
+              final recentBookings = bookingProvider.myBookings.take(3).toList();
+
+              return Column(
+                children: recentBookings.map((booking) {
+                  return _buildBookingStatusCard(booking);
+                }).toList(),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBookingStatusCard(
-      String equipment,
-      String lab,
-      String date,
-      String time,
-      bool isActive,
-      ) {
+  Widget _buildBookingStatusCard(Booking booking) {
+    // Convert to IST (UTC + 5:30)
+    // Assuming the backend returns UTC time or we want to force IST display
+    final istTime = booking.startTime.toUtc().add(const Duration(hours: 5, minutes: 30));
+    
+    final date = DateFormat('MMM dd, yyyy').format(istTime);
+    final time = DateFormat('hh:mm a').format(istTime);
+    
+    bool isActive = booking.status.toLowerCase() == 'confirmed' &&
+        booking.startTime.isBefore(DateTime.now()) &&
+        booking.endTime.isAfter(DateTime.now());
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -397,7 +527,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  equipment,
+                  booking.equipment.name,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -414,7 +544,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      lab,
+                      booking.equipment.labId,
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -452,7 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              isActive ? 'Active' : 'Completed',
+              isActive ? 'Active' : booking.status,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,

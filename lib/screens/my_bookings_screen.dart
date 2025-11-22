@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../utils/colors.dart';
+import '../providers/booking_provider.dart';
+import '../models/booking.dart';
 
 /// My Bookings screen showing all user bookings
 class MyBookingsScreen extends StatefulWidget {
@@ -16,7 +20,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
+    
+    // Fetch bookings when screen loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<BookingProvider>(context, listen: false).fetchMyBookings();
+    });
   }
 
   @override
@@ -54,34 +63,103 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
             Tab(text: 'Active'),
             Tab(text: 'Upcoming'),
             Tab(text: 'History'),
+            Tab(text: 'Rejected'),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildBookingsList('active'),
-          _buildBookingsList('upcoming'),
-          _buildBookingsList('history'),
-        ],
+      body: Consumer<BookingProvider>(
+        builder: (context, bookingProvider, child) {
+          if (bookingProvider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (bookingProvider.errorMessage != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading bookings',
+                    style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      bookingProvider.fetchMyBookings();
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final allBookings = bookingProvider.myBookings;
+          
+          // Categorize bookings
+          final now = DateTime.now();
+          
+          final activeBookings = allBookings.where((b) {
+            final isActive = b.startTime.isBefore(now) && b.endTime.isAfter(now);
+            final isApproved = b.status.toLowerCase() == 'approved' || b.status.toLowerCase() == 'active';
+            return isActive && isApproved;
+          }).toList();
+
+          final upcomingBookings = allBookings.where((b) {
+            final isFuture = b.startTime.isAfter(now);
+            final isNotCancelled = !['cancelled', 'rejected'].contains(b.status.toLowerCase());
+            return isFuture && isNotCancelled;
+          }).toList();
+
+          final historyBookings = allBookings.where((b) {
+            final isPast = b.endTime.isBefore(now);
+            final isCompleted = b.status.toLowerCase() == 'completed';
+            // History now only includes past or completed, NOT rejected/cancelled
+            return (isPast || isCompleted) && !['cancelled', 'rejected'].contains(b.status.toLowerCase());
+          }).toList();
+
+          final rejectedBookings = allBookings.where((b) {
+            return ['cancelled', 'rejected'].contains(b.status.toLowerCase());
+          }).toList();
+
+          return TabBarView(
+            controller: _tabController,
+            children: [
+              _buildBookingsList(activeBookings, 'active'),
+              _buildBookingsList(upcomingBookings, 'upcoming'),
+              _buildBookingsList(historyBookings, 'history'),
+              _buildBookingsList(rejectedBookings, 'rejected'),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildBookingsList(String type) {
-    // Mock data - replace with actual API data
-    final bookings = _getMockBookings(type);
-
+  Widget _buildBookingsList(List<Booking> bookings, String type) {
     if (bookings.isEmpty) {
-      return _buildEmptyState(type);
+      return RefreshIndicator(
+        onRefresh: () => Provider.of<BookingProvider>(context, listen: false).fetchMyBookings(),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: _buildEmptyState(type),
+          ),
+        ),
+      );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: bookings.length,
-      itemBuilder: (context, index) {
-        return _buildBookingItem(bookings[index], type);
-      },
+    return RefreshIndicator(
+      onRefresh: () => Provider.of<BookingProvider>(context, listen: false).fetchMyBookings(),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: bookings.length,
+        itemBuilder: (context, index) {
+          return _buildBookingItem(bookings[index], type);
+        },
+      ),
     );
   }
 
@@ -97,6 +175,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       case 'upcoming':
         message = 'No upcoming bookings';
         icon = Icons.event_available;
+        break;
+      case 'rejected':
+        message = 'No rejected bookings';
+        icon = Icons.cancel_presentation;
         break;
       default:
         message = 'No booking history';
@@ -134,7 +216,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     );
   }
 
-  Widget _buildBookingItem(Map<String, dynamic> booking, String type) {
+  Widget _buildBookingItem(Booking booking, String type) {
+    final dateFormat = DateFormat('MMM dd, yyyy');
+    final timeFormat = DateFormat('hh:mm a');
+    
+    final dateStr = dateFormat.format(booking.startTime.toLocal());
+    final timeStr = '${timeFormat.format(booking.startTime.toLocal())} - ${timeFormat.format(booking.endTime.toLocal())}';
+    
+    final duration = booking.endTime.difference(booking.startTime);
+    final durationStr = '${duration.inHours} hours';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -176,7 +267,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            booking['equipment'],
+                            booking.equipment.name,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -193,7 +284,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                booking['lab'],
+                                'Lab ID: ${booking.equipment.labId}', // Displaying Lab ID as Name is not available in Booking model
                                 style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
@@ -204,7 +295,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                         ],
                       ),
                     ),
-                    _buildStatusBadge(booking['status']),
+                    _buildStatusBadge(booking.status),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -216,26 +307,30 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                       child: _buildInfoItem(
                         Icons.calendar_today_outlined,
                         'Date',
-                        booking['date'],
+                        dateStr,
                       ),
                     ),
                     Expanded(
                       child: _buildInfoItem(
                         Icons.access_time,
                         'Time',
-                        booking['time'],
+                        timeStr,
                       ),
                     ),
                   ],
                 ),
-                if (booking['duration'] != null) ...[
-                  const SizedBox(height: 12),
-                  _buildInfoItem(
-                    Icons.timelapse,
-                    'Duration',
-                    booking['duration'],
-                  ),
-                ],
+                const SizedBox(height: 12),
+                _buildInfoItem(
+                  Icons.timelapse,
+                  'Duration',
+                  durationStr,
+                ),
+                const SizedBox(height: 12),
+                _buildInfoItem(
+                  Icons.description_outlined,
+                  'Purpose',
+                  booking.purpose,
+                ),
               ],
             ),
           ),
@@ -249,15 +344,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     Color color;
     switch (status.toLowerCase()) {
       case 'active':
+      case 'approved':
         color = AppColors.success;
         break;
       case 'upcoming':
+      case 'pending':
         color = AppColors.info;
         break;
       case 'completed':
         color = AppColors.mediumGray;
         break;
       case 'cancelled':
+      case 'rejected':
         color = AppColors.error;
         break;
       default:
@@ -271,7 +369,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        status,
+        status.toUpperCase(),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -394,70 +492,5 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
         ],
       ),
     );
-  }
-
-  List<Map<String, dynamic>> _getMockBookings(String type) {
-    // Replace with actual API data
-    switch (type) {
-      case 'active':
-        return [
-          {
-            'equipment': 'Oscilloscope',
-            'lab': 'Electronics Lab',
-            'date': 'Oct 04, 2025',
-            'time': '10:00 AM - 12:00 PM',
-            'duration': '2 hours',
-            'status': 'Active',
-          },
-        ];
-      case 'upcoming':
-        return [
-          {
-            'equipment': 'Arduino Kit',
-            'lab': 'IoT Lab',
-            'date': 'Oct 05, 2025',
-            'time': '02:00 PM - 04:00 PM',
-            'duration': '2 hours',
-            'status': 'Upcoming',
-          },
-          {
-            'equipment': 'Raspberry Pi',
-            'lab': 'Computer Lab',
-            'date': 'Oct 06, 2025',
-            'time': '11:00 AM - 01:00 PM',
-            'duration': '2 hours',
-            'status': 'Upcoming',
-          },
-        ];
-      case 'history':
-        return [
-          {
-            'equipment': 'Multimeter',
-            'lab': 'Physics Lab',
-            'date': 'Oct 02, 2025',
-            'time': '11:30 AM - 01:30 PM',
-            'duration': '2 hours',
-            'status': 'Completed',
-          },
-          {
-            'equipment': 'Function Generator',
-            'lab': 'Electronics Lab',
-            'date': 'Oct 01, 2025',
-            'time': '03:00 PM - 05:00 PM',
-            'duration': '2 hours',
-            'status': 'Completed',
-          },
-          {
-            'equipment': 'Spectrum Analyzer',
-            'lab': 'Communication Lab',
-            'date': 'Sep 28, 2025',
-            'time': '10:00 AM - 12:00 PM',
-            'duration': '2 hours',
-            'status': 'Completed',
-          },
-        ];
-      default:
-        return [];
-    }
   }
 }
