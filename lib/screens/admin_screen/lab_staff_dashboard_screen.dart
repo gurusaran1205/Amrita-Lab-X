@@ -14,15 +14,12 @@ class LabStaffDashboardScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      // SafeArea ensures your UI is not obstructed by the system status bar (at the top)
-      // or the navigation bar (at the bottom on some devices).
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // The large SizedBox has been removed. SafeArea handles the top space now.
               if (user != null) _buildWelcomeCard(context, user.name),
               const SizedBox(height: AppConstants.largePadding),
               _buildDashboardGrid(context),
@@ -99,6 +96,25 @@ class LabStaffDashboardScreen extends StatelessWidget {
             Navigator.pushNamed(context, '/add_department');
           },
         ),
+
+        // ⭐ FIX: Edit Department must go to a screen that lists departments
+        _buildDashboardItem(
+          context,
+          icon: Icons.edit_outlined,
+          label: 'Edit Department',
+          onTap: () {
+            Navigator.pushNamed(context, '/manage_departments'); // <-- FIX
+          },
+        ),
+
+        _buildDashboardItem(
+          context,
+          icon: Icons.delete_outline,
+          label: 'Delete Department',
+          onTap: () {
+            Navigator.pushNamed(context, '/delete_department');
+          },
+        ),
         _buildDashboardItem(
           context,
           icon: Icons.science_outlined,
@@ -109,10 +125,42 @@ class LabStaffDashboardScreen extends StatelessWidget {
         ),
         _buildDashboardItem(
           context,
+          icon: Icons.edit_location_alt_outlined,
+          label: 'Edit Lab',
+          onTap: () {
+            Navigator.pushNamed(context, '/manage_labs');
+          },
+        ),
+        _buildDashboardItem(
+          context,
+          icon: Icons.delete_forever_outlined,
+          label: 'Delete Lab',
+          onTap: () {
+            Navigator.pushNamed(context, '/delete_lab');
+          },
+        ),
+        _buildDashboardItem(
+          context,
           icon: Icons.biotech_outlined,
           label: 'Add Equipment',
           onTap: () {
             Navigator.pushNamed(context, '/add_equipment');
+          },
+        ),
+        _buildDashboardItem(
+          context,
+          icon: Icons.edit_note_outlined,
+          label: 'Edit Equipment',
+          onTap: () {
+            Navigator.pushNamed(context, '/manage_equipments');
+          },
+        ),
+        _buildDashboardItem(
+          context,
+          icon: Icons.delete_sweep_outlined,
+          label: 'Delete Equipment',
+          onTap: () {
+            Navigator.pushNamed(context, '/delete_equipment');
           },
         ),
         _buildDashboardItem(

@@ -317,6 +317,40 @@ class AuthProvider with ChangeNotifier {
     debugPrint('✅ User logged out successfully');
   }
 
+  /// Delete a department by ID
+  Future<Map<String, dynamic>?> deleteDepartment(String departmentId) async {
+    try {
+      _setState(AuthState.loading);
+      _clearError();
+
+      final response = await _apiService.deleteDepartment(departmentId);
+
+      if (response.success) {
+        _setState(AuthState.initial);
+        return {
+          "success": true,
+          "message": response.message,
+        };
+      } else {
+        _setError(response.message);
+        _setState(AuthState.error);
+        return {
+          "success": false,
+          "message": response.message,
+        };
+      }
+    } catch (e) {
+      debugPrint("❌ Delete department failed: $e");
+      _setError("Failed to delete department");
+      _setState(AuthState.error);
+
+      return {
+        "success": false,
+        "message": "Error: $e",
+      };
+    }
+  }
+
   /// Clear any error messages
   void clearError() {
     _clearError();

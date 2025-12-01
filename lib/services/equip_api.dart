@@ -5,7 +5,7 @@ import '../models/department.dart';
 import '../models/lab.dart';
 import '../models/equipment.dart';
 import '../models/booking.dart';
-import '../models/user.dart'; 
+import '../models/user.dart';
 
 class ApiService {
   final String baseUrl = 'http://107.21.163.19';
@@ -88,6 +88,39 @@ class ApiService {
     }
   }
 
+  // UPDATE Lab
+  Future<bool> updateLab(Lab lab) async {
+    final response = await http.put(
+      Uri.parse("$baseUrl/api/labs/${lab.id}"),
+      headers: _headers,
+      body: json.encode(lab.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      debugPrint(
+          "Failed to update lab. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
+
+  // DELETE Lab
+  Future<bool> deleteLab(String labId) async {
+    final response = await http.delete(
+      Uri.parse("$baseUrl/api/labs/$labId"),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      debugPrint(
+          "Failed to delete lab. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
+
   Future<bool> addEquipment(Equipment equipment) async {
     final response = await http.post(
       Uri.parse("$baseUrl/api/equipment"),
@@ -99,6 +132,39 @@ class ApiService {
     } else {
       debugPrint(
           "Failed to add equipment. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
+
+  // UPDATE Equipment
+  Future<bool> updateEquipment(Equipment equipment) async {
+    final response = await http.put(
+      Uri.parse("$baseUrl/api/equipment/${equipment.id}"),
+      headers: _headers,
+      body: json.encode(equipment.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      debugPrint(
+          "Failed to update equipment. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
+
+  // DELETE Equipment
+  Future<bool> deleteEquipment(String equipmentId) async {
+    final response = await http.delete(
+      Uri.parse("$baseUrl/api/equipment/$equipmentId"),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      debugPrint(
+          "Failed to delete equipment. Status: ${response.statusCode}, Body: ${response.body}");
       return false;
     }
   }
@@ -187,10 +253,44 @@ class ApiService {
     }
   }
 
+  // UPDATE Department
+  Future<bool> updateDepartment(Department department) async {
+    final response = await http.put(
+      Uri.parse("$baseUrl/api/departments/${department.id}"),
+      headers: _headers,
+      body: json.encode(department.toJson()),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      debugPrint(
+          "Failed to update department. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
+
+// DELETE Department
+  Future<bool> deleteDepartment(String deptId) async {
+    final response = await http.delete(
+      Uri.parse("$baseUrl/api/departments/$deptId"),
+      headers: _headers,
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      debugPrint(
+          "Failed to delete department. Status: ${response.statusCode}, Body: ${response.body}");
+      return false;
+    }
+  }
+
   // --- NEW METHODS FOR USER MANAGEMENT ---
 
   /// Retrieves a list of all users for an admin.
-  Future<List<User>> fetchAllUsers() async { // UPDATE THE RETURN TYPE
+  Future<List<User>> fetchAllUsers() async {
+    // UPDATE THE RETURN TYPE
     final response = await http.get(
       Uri.parse("$baseUrl/api/admin/users"),
       headers: _headers,
@@ -218,7 +318,8 @@ class ApiService {
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else if (response.statusCode == 403) {
-      throw Exception("Permission Denied: Admins can only block regular users.");
+      throw Exception(
+          "Permission Denied: Admins can only block regular users.");
     } else if (response.statusCode == 404) {
       throw Exception("User not found.");
     } else {

@@ -340,6 +340,45 @@ class ApiService {
     }
   }
 
+  /// Delete Department by ID
+  Future<ApiResponse<bool>> deleteDepartment(String departmentId) async {
+    try {
+      final url = Uri.parse(
+          '$_baseUrl${AppConstants.departmentsEndpoint}/$departmentId');
+
+      print("🗑️ Delete Department API: $url");
+
+      final response = await _client
+          .delete(url, headers: _headers)
+          .timeout(AppConstants.connectionTimeout);
+
+      print("📥 Delete Response: ${response.statusCode}");
+      print("📥 Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        return ApiResponse.success(
+          data: true,
+          message: "Department deleted successfully",
+          statusCode: 200,
+        );
+      } else {
+        final body = jsonDecode(response.body);
+        final message = body["message"] ?? "Failed to delete department";
+
+        return ApiResponse.error(
+          message: message,
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      print("❌ Delete Department Error: $e");
+      return ApiResponse.error(
+        message: AppConstants.genericError,
+        statusCode: 500,
+      );
+    }
+  }
+
   /// Health check endpoint (optional - for testing connectivity)
   Future<bool> healthCheck() async {
     try {
