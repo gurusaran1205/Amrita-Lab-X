@@ -327,4 +327,36 @@ class ApiService {
           "Failed to update user status (Status code: ${response.statusCode})");
     }
   }
+  /// Process a QR Scan (Check-In, Use Equipment, or Log Out)
+  /// 
+  /// Endpoint: POST /api/scan
+  /// Body: { "payload": "..." }
+  Future<Map<String, dynamic>> processScan(String payload) async {
+    final url = Uri.parse("$baseUrl/api/scan");
+    debugPrint('📤 Sending Scan Payload: $payload');
+    
+    final response = await http.post(
+      url,
+      headers: _headers,
+      body: json.encode({'payload': payload}),
+    );
+
+    debugPrint('📥 Scan Response: ${response.statusCode} - ${response.body}');
+
+    final Map<String, dynamic> responseData = json.decode(response.body);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return {
+        'success': true,
+        'message': responseData['message'] ?? 'Operation successful',
+        'data': responseData
+      };
+    } else {
+      return {
+        'success': false,
+        'message': responseData['message'] ?? 'Operation failed',
+        'statusCode': response.statusCode
+      };
+    }
+  }
 }
