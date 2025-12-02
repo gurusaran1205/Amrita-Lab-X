@@ -95,33 +95,10 @@ class SuccessScreen extends StatelessWidget {
 
                       const SizedBox(height: AppConstants.largePadding * 2),
 
-                      // Continue button
+                      // Login button
                       PrimaryButton(
-                        text: 'Continue to App',
-                        onPressed: () async {
-                          final equipmentProvider =
-                              context.read<EquipmentProvider>();
-                          await equipmentProvider
-                              .loadDepartments(); // ✅ only now, token exists
-
-                          // Navigate to main_navigation instead of equipment selection
-                          Navigator.pushReplacementNamed(
-                              context, '/main_navigation');
-                        },
-                      ),
-
-                      const SizedBox(height: AppConstants.defaultPadding),
-
-                      // Logout option
-                      TextButton(
+                        text: 'Login to Continue',
                         onPressed: () => _handleLogout(context, authProvider),
-                        child: const Text(
-                          'Logout',
-                          style: TextStyle(
-                            color: AppColors.textLight,
-                            fontSize: AppConstants.bodyFontSize,
-                          ),
-                        ),
                       ),
                     ],
                   ),
@@ -137,6 +114,6 @@ class SuccessScreen extends StatelessWidget {
   Future<void> _handleLogout(
       BuildContext context, AuthProvider authProvider) async {
     await authProvider.logout();
-    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 }

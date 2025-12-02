@@ -1,6 +1,7 @@
 import 'package:amrita_ulabs/screens/edit_profile_screen.dart';
 import 'package:amrita_ulabs/screens/help_faq_screen.dart';
 import 'package:amrita_ulabs/screens/privacy_policy_screen.dart';
+import 'package:amrita_ulabs/screens/developers_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -22,8 +23,7 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 _buildProfileHeader(context),
                 const SizedBox(height: 24),
-                _buildStatsCards(context),
-                const SizedBox(height: 24),
+                // Stats removed
                 _buildMenuSection(context),
                 const SizedBox(height: 24),
               ],
@@ -169,91 +169,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsCards(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildStatCard(
-              context,
-              icon: Icons.event_available,
-              label: 'Total Bookings',
-              value: '24',
-              color: AppColors.info,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              context,
-              icon: Icons.access_time,
-              label: 'Hours Used',
-              value: '48',
-              color: AppColors.success,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildStatCard(
-              context,
-              icon: Icons.star,
-              label: 'Rating',
-              value: '4.8',
-              color: AppColors.warning,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildStatCard(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withAlpha((255 * 0.1).round()),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMenuSection(BuildContext context) {
     return Padding(
@@ -275,17 +191,6 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
-              MenuItemData(
-                icon: Icons.notifications_outlined,
-                title: 'Notifications',
-                trailing: Switch(
-                  value: true,
-                  onChanged: (value) {
-                    // TODO: Toggle notifications
-                  },
-                  activeColor: AppColors.primaryMaroon,
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -302,6 +207,13 @@ class ProfileScreen extends StatelessWidget {
                     MaterialPageRoute(
                         builder: (context) => const HelpFaqScreen()),
                   );
+                },
+              ),
+              MenuItemData(
+                icon: Icons.code,
+                title: 'Meet the Developers',
+                onTap: () {
+                  _showDevelopersDialog(context);
                 },
               ),
               MenuItemData(
@@ -535,6 +447,12 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+  void _showDevelopersDialog(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const DevelopersScreen()),
     );
   }
 }

@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
 import '../utils/colors.dart';
+import '../services/equip_api.dart';
+import '../providers/auth_provider.dart';
 
-/// QR Scanner screen for checking in/out equipment
+enum ScanMode { entrance, equipment, logout }
+
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
 
@@ -10,14 +15,153 @@ class QRScannerScreen extends StatefulWidget {
   State<QRScannerScreen> createState() => _QRScannerScreenState();
 }
 
-class _QRScannerScreenState extends State<QRScannerScreen> {
-  final MobileScannerController _controller = MobileScannerController();
-  bool _isScanning = false;
+class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProviderStateMixin {
+  final MobileScannerController _controller = MobileScannerController(
+    autoStart: false,
+  );
+  ScanMode _scanMode = ScanMode.entrance;
+  bool _isProcessing = false;
+  bool _isCameraActive = false;
+  final List<String> _messageLog = [];
+
+  // Animation
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize Animation
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _animationController.reverse();
+      } else if (status == AnimationStatus.dismissed) {
+        _animationController.forward();
+      }
+    });
+  }
 
   @override
   void dispose() {
     _controller.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  void _addLog(String message, {bool isError = false}) {
+    setState(() {
+      _messageLog.insert(0, "${isError ? '❌' : '✅'} $message");
+      if (_messageLog.length > 20) _messageLog.removeLast();
+    });
+  }
+
+  Future<void> _startCamera() async {
+    setState(() {
+      _isCameraActive = true;
+    });
+    await _controller.start();
+    _animationController.forward();
+  }
+
+  Future<void> _stopCamera() async {
+    setState(() {
+      _isCameraActive = false;
+    });
+    await _controller.stop();
+    _animationController.stop();
+  }
+
+  Future<void> _processCode(String code) async {
+    if (_isProcessing) return;
+
+    // Stop camera immediately upon detection to save resources
+    await _stopCamera();
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      // 1. Parse JSON
+      Map<String, dynamic> payload;
+      try {
+        payload = json.decode(code);
+      } catch (e) {
+        _showSnackBar('Invalid QR Code format', isError: true);
+        _addLog('Scanned invalid QR format', isError: true);
+        return;
+      }
+
+      final String type = payload['type'] ?? '';
+
+      // 2. Validate Mode
+      bool isValid = false;
+      String errorMsg = '';
+
+      switch (_scanMode) {
+        case ScanMode.entrance:
+          if (type == 'lab_entrance') isValid = true;
+          else errorMsg = 'Expected Lab Entrance QR';
+          break;
+        case ScanMode.equipment:
+          if (type == 'equipment') isValid = true;
+          else errorMsg = 'Expected Equipment QR';
+          break;
+        case ScanMode.logout:
+          if (type == 'logout') isValid = true;
+          else errorMsg = 'Expected Logout QR';
+          break;
+      }
+
+      if (!isValid) {
+        _showSnackBar(errorMsg, isError: true);
+        _addLog('Invalid QR for ${_scanMode.name} mode: $type', isError: true);
+        return;
+      }
+
+      // 3. Call API
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final apiService = ApiService(token: authProvider.token);
+
+      final result = await apiService.processScan(code);
+
+      if (result['success'] == true) {
+        final msg = result['message'] ?? 'Success';
+        _showSnackBar(msg);
+        _addLog(msg);
+      } else {
+        final msg = result['message'] ?? 'Failed';
+        _showSnackBar(msg, isError: true);
+        _addLog(msg, isError: true);
+      }
+
+    } catch (e) {
+      _showSnackBar('Error processing scan: $e', isError: true);
+      _addLog('Error: $e', isError: true);
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+      // NOTE: Camera is NOT restarted here, as per user request.
+    }
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? AppColors.error : AppColors.success,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -42,433 +186,272 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildScannerCard(),
-            const SizedBox(height: 24),
-            _buildInstructions(),
-            const SizedBox(height: 24),
-            _buildRecentScans(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScannerCard() {
-    return Container(
-      height: 400,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha((255 * 0.08).round()),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      body: Column(
         children: [
-          Container(
-            width: 240,
-            height: 240,
-            decoration: BoxDecoration(
-              color: AppColors.primaryMaroon.withAlpha((255 * 0.05).round()),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppColors.primaryMaroon.withAlpha((255 * 0.2).round()),
-                width: 2,
-              ),
-            ),
+          // Scanner Area
+          Expanded(
+            flex: 3,
             child: Stack(
               children: [
-                // Corner decorations
-                _buildCornerDecoration(Alignment.topLeft),
-                _buildCornerDecoration(Alignment.topRight),
-                _buildCornerDecoration(Alignment.bottomLeft),
-                _buildCornerDecoration(Alignment.bottomRight),
-                
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: _isScanning
-                      ? MobileScanner(
-                          controller: _controller,
-                          onDetect: (capture) {
-                            final List<Barcode> barcodes = capture.barcodes;
-                            if (barcodes.isNotEmpty) {
-                              final String? code = barcodes.first.rawValue;
-                              if (code != null) {
-                                _controller.stop();
-                                _showScanResultDialog(code);
-                              }
-                            }
-                          },
-                        )
-                      : Center(
-                          child: Icon(
+                if (_isCameraActive)
+                  MobileScanner(
+                    controller: _controller,
+                    onDetect: (capture) {
+                      final List<Barcode> barcodes = capture.barcodes;
+                      if (barcodes.isNotEmpty) {
+                        final String? code = barcodes.first.rawValue;
+                        if (code != null) {
+                          _processCode(code);
+                        }
+                      }
+                    },
+                  )
+                else
+                  Container(
+                    color: Colors.black,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
                             Icons.qr_code_scanner,
-                            size: 100,
-                            color: AppColors.primaryMaroon.withAlpha((255 * 0.3).round()),
+                            size: 80,
+                            color: Colors.white54,
                           ),
-                        ),
-                ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: _startCamera,
+                            icon: const Icon(Icons.camera_alt),
+                            label: const Text('Start Scanning'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryMaroon,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                
+                if (_isCameraActive) ...[
+                  _buildScannerOverlay(),
+                  // Stop Button
+                  Positioned(
+                    bottom: 20,
+                    right: 20,
+                    child: FloatingActionButton(
+                      onPressed: _stopCamera,
+                      backgroundColor: Colors.red,
+                      mini: true,
+                      child: const Icon(Icons.stop, color: Colors.white),
+                    ),
+                  ),
+                ],
+
+                if (_isProcessing)
+                  Container(
+                    color: Colors.black54,
+                    child: const Center(
+                      child: CircularProgressIndicator(color: AppColors.primaryMaroon),
+                    ),
+                  ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: ElevatedButton(
-              onPressed: _toggleScanning,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isScanning
-                    ? AppColors.error
-                    : AppColors.primaryMaroon,
-                foregroundColor: AppColors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+
+          // Mode Selector
+          Container(
+            color: AppColors.white,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            child: Row(
+              children: [
+                _buildModeButton('Enter Lab', ScanMode.entrance, Icons.login),
+                const SizedBox(width: 8),
+                _buildModeButton('Equipment', ScanMode.equipment, Icons.build),
+                const SizedBox(width: 8),
+                _buildModeButton('Logout', ScanMode.logout, Icons.logout),
+              ],
+            ),
+          ),
+
+          // Message Log
+          Expanded(
+            flex: 2,
+            child: Container(
+              width: double.infinity,
+              color: AppColors.background,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    _isScanning ? Icons.stop : Icons.qr_code_scanner,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isScanning ? 'Stop Scanning' : 'Start Scanning',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Session Log',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
+                  ),
+                  Expanded(
+                    child: _messageLog.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No scans yet',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: _messageLog.length,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: AppColors.divider),
+                                ),
+                                child: Text(
+                                  _messageLog[index],
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            _isScanning
-                ? 'Point camera at QR code'
-                : 'Tap to start scanning',
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildCornerDecoration(Alignment alignment) {
-    return Align(
-      alignment: alignment,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          border: Border(
-            top: alignment.y < 0
-                ? const BorderSide(color: AppColors.primaryMaroon, width: 3)
-                : BorderSide.none,
-            bottom: alignment.y > 0
-                ? const BorderSide(color: AppColors.primaryMaroon, width: 3)
-                : BorderSide.none,
-            left: alignment.x < 0
-                ? const BorderSide(color: AppColors.primaryMaroon, width: 3)
-                : BorderSide.none,
-            right: alignment.x > 0
-                ? const BorderSide(color: AppColors.primaryMaroon, width: 3)
-                : BorderSide.none,
+  Widget _buildModeButton(String label, ScanMode mode, IconData icon) {
+    final isSelected = _scanMode == mode;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _scanMode = mode;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryMaroon : AppColors.background,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? AppColors.primaryMaroon : AppColors.divider,
+            ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInstructions() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.info.withAlpha((255 * 0.1).round()),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.info.withAlpha((255 * 0.3).round()),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
+          child: Column(
             children: [
               Icon(
-                Icons.info_outline,
-                color: AppColors.info,
+                icon,
                 size: 20,
+                color: isSelected ? AppColors.white : AppColors.textSecondary,
               ),
-              SizedBox(width: 8),
+              const SizedBox(height: 4),
               Text(
-                'How to Use',
+                label,
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.info,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? AppColors.white : AppColors.textSecondary,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildInstructionStep('1', 'Tap "Start Scanning" button'),
-          _buildInstructionStep('2', 'Point camera at equipment QR code'),
-          _buildInstructionStep('3', 'Wait for automatic detection'),
-          _buildInstructionStep('4', 'Confirm check-in/check-out'),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildInstructionStep(String number, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: const BoxDecoration(
-              color: AppColors.info,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: const TextStyle(
-                  color: AppColors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildScannerOverlay() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scanWindowWidth = constraints.maxWidth * 0.7;
+        final scanWindowHeight = scanWindowWidth;
+        final scanWindow = Rect.fromCenter(
+          center: Offset(constraints.maxWidth / 2, constraints.maxHeight / 2),
+          width: scanWindowWidth,
+          height: scanWindowHeight,
+        );
 
-  Widget _buildRecentScans() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Recent Scans',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        _buildRecentScanItem(
-          'Oscilloscope - OSC001',
-          'Checked In',
-          '2 minutes ago',
-          AppColors.success,
-        ),
-        const SizedBox(height: 12),
-        _buildRecentScanItem(
-          'Arduino Kit - ARD045',
-          'Checked Out',
-          '1 hour ago',
-          AppColors.info,
-        ),
-        const SizedBox(height: 12),
-        _buildRecentScanItem(
-          'Multimeter - MUL023',
-          'Checked Out',
-          '2 days ago',
-          AppColors.info,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRecentScanItem(
-    String equipment,
-    String action,
-    String time,
-    Color statusColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: statusColor.withAlpha((255 * 0.1).round()),
-              borderRadius: BorderRadius.circular(10),
+        return Stack(
+          children: [
+            AnimatedBuilder(
+              animation: _animation,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: ScannerOverlayPainter(
+                    scanWindow: scanWindow,
+                    scanLineOffset: _animation.value,
+                  ),
+                  child: Container(),
+                );
+              },
             ),
-            child: Icon(
-              action == 'Checked In' ? Icons.login : Icons.logout,
-              color: statusColor,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  equipment,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 80),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _getOverlayText(),
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  time,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withAlpha((255 * 0.1).round()),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              action,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: statusColor,
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
-  void _toggleScanning() {
-    setState(() {
-      _isScanning = !_isScanning;
-    });
-
-    if (_isScanning) {
-      _controller.start();
-    } else {
-      _controller.stop();
+  String _getOverlayText() {
+    switch (_scanMode) {
+      case ScanMode.entrance:
+        return 'Scan Lab Entrance QR';
+      case ScanMode.equipment:
+        return 'Scan Equipment QR';
+      case ScanMode.logout:
+        return 'Scan Logout QR';
     }
-  }
-
-  void _showScanResultDialog(String code) {
-    setState(() {
-      _isScanning = false;
-    });
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle, color: AppColors.success),
-            SizedBox(width: 8),
-            Text('QR Code Detected'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Equipment: Oscilloscope'),
-            const SizedBox(height: 4),
-            Text('Code: $code'),
-            const SizedBox(height: 4),
-            const Text('Lab: Electronics Lab'),
-            const SizedBox(height: 16),
-            const Text(
-              'Would you like to check in this equipment?',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Equipment checked in successfully!'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryMaroon,
-            ),
-            child: const Text('Check In'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showHelpDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text('QR Scanner Help'),
-        content: const Text(
-          'Use the QR scanner to:\n\n'
-          '• Check in equipment when you arrive\n'
-          '• Check out equipment when you leave\n'
-          '• Verify equipment details\n\n'
-          'Each equipment has a unique QR code located on the device or storage area.',
+        title: const Text('How to Scan'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('1. Select the correct mode (Enter Lab, Equipment, or Logout).'),
+            SizedBox(height: 8),
+            Text('2. Point the camera at the corresponding QR code.'),
+            SizedBox(height: 8),
+            Text('3. Wait for the scan to process.'),
+            SizedBox(height: 16),
+            Text('Note: Ensure you are scanning the correct type of QR code for the selected mode.'),
+          ],
         ),
         actions: [
           TextButton(
@@ -478,5 +461,75 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         ],
       ),
     );
+  }
+}
+
+class ScannerOverlayPainter extends CustomPainter {
+  final Rect scanWindow;
+  final double borderRadius;
+  final double scanLineOffset;
+
+  ScannerOverlayPainter({
+    required this.scanWindow,
+    this.borderRadius = 12.0,
+    required this.scanLineOffset,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final backgroundPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    final cutoutPath = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          scanWindow,
+          Radius.circular(borderRadius),
+        ),
+      );
+
+    final backgroundPaint = Paint()
+      ..color = Colors.black54
+      ..style = PaintingStyle.fill;
+
+    final backgroundWithCutout = Path.combine(
+      PathOperation.difference,
+      backgroundPath,
+      cutoutPath,
+    );
+
+    canvas.drawPath(backgroundWithCutout, backgroundPaint);
+
+    // Draw border
+    final borderPaint = Paint()
+      ..color = AppColors.primaryMaroon
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(scanWindow, Radius.circular(borderRadius)),
+      borderPaint,
+    );
+
+    // Draw Scanning Line
+    final linePaint = Paint()
+      ..color = AppColors.primaryMaroon
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+
+    final lineY = scanWindow.top + (scanWindow.height * scanLineOffset);
+
+    // Draw line only within the scan window width
+    canvas.drawLine(
+      Offset(scanWindow.left, lineY),
+      Offset(scanWindow.right, lineY),
+      linePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant ScannerOverlayPainter oldDelegate) {
+    return oldDelegate.scanLineOffset != scanLineOffset;
   }
 }

@@ -101,9 +101,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           final now = DateTime.now();
           
           final activeBookings = allBookings.where((b) {
-            final isActive = b.startTime.isBefore(now) && b.endTime.isAfter(now);
-            final isApproved = b.status.toLowerCase() == 'approved' || b.status.toLowerCase() == 'active';
-            return isActive && isApproved;
+            final status = b.status.toLowerCase();
+            if (['cancelled', 'rejected'].contains(status)) return false;
+            if (status == 'checked_in') return true;
+            return b.startTime.isBefore(now) && b.endTime.isAfter(now);
           }).toList();
 
           final upcomingBookings = allBookings.where((b) {
@@ -141,12 +142,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     if (bookings.isEmpty) {
       return RefreshIndicator(
         onRefresh: () => Provider.of<BookingProvider>(context, listen: false).fetchMyBookings(),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.7,
-            child: _buildEmptyState(type),
-          ),
+        child: CustomScrollView(
+          slivers: [
+            SliverFillRemaining(
+              child: _buildEmptyState(type),
+            ),
+          ],
         ),
       );
     }
@@ -334,7 +335,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
               ],
             ),
           ),
-          if (type == 'active') _buildActionButtons(),
+
         ],
       ),
     );
@@ -408,89 +409,5 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     );
   }
 
-  Widget _buildActionButtons() {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          top: BorderSide(color: AppColors.divider),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextButton(
-              onPressed: () {
-                // Show QR code
-              },
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.qr_code, size: 18),
-                  SizedBox(width: 8),
-                  Text('Show QR'),
-                ],
-              ),
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 40,
-            color: AppColors.divider,
-          ),
-          Expanded(
-            child: TextButton(
-              onPressed: () {
-                _showCancelDialog();
-              },
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.error,
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.cancel_outlined, size: 18),
-                  SizedBox(width: 8),
-                  Text('Cancel'),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  void _showCancelDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Booking'),
-        content: const Text(
-          'Are you sure you want to cancel this booking? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('No, Keep It'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement cancel booking API call
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Booking cancelled successfully'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.error,
-            ),
-            child: const Text('Yes, Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
 }
