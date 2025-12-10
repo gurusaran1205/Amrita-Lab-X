@@ -253,6 +253,25 @@ class ApiService {
     }
   }
 
+  Future<bool> cancelBooking(String bookingId, String reason) async {
+    final response = await http.put(
+      Uri.parse("$baseUrl/api/bookings/$bookingId/cancel"),
+      headers: _headers,
+      body: json.encode({'reason': reason}),
+    );
+    
+    debugPrint("--- CANCEL BOOKING ---");
+    debugPrint("Status Code: ${response.statusCode}");
+    debugPrint("Response Body: ${response.body}");
+    
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      final body = json.decode(response.body);
+      throw Exception(body['message'] ?? "Failed to cancel booking");
+    }
+  }
+
   // UPDATE Department
   Future<bool> updateDepartment(Department department) async {
     final response = await http.put(

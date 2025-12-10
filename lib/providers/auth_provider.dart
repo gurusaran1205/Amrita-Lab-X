@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user.dart';
+import '../models/department.dart';
 import '../models/api_response.dart';
 import '../models/forgot_password_models.dart';
 import '../services/api_service.dart';
@@ -22,6 +23,7 @@ class AuthProvider with ChangeNotifier {
   String? _pendingEmail;
   String? _pendingName;
   String? _pendingPassword;
+  String? _pendingDepartment;
   DateTime? _otpSentAt;
 
   // Forgot password related fields
@@ -61,6 +63,7 @@ class AuthProvider with ChangeNotifier {
     required String name,
     required String email,
     required String password,
+    required String department,
   }) async {
     try {
       _setState(AuthState.loading);
@@ -70,6 +73,7 @@ class AuthProvider with ChangeNotifier {
         name: name,
         email: email,
         password: password,
+        department: department,
       );
 
       final response = await _apiService.sendOtp(request);
@@ -79,6 +83,7 @@ class AuthProvider with ChangeNotifier {
         _pendingName = name;
         _pendingEmail = email;
         _pendingPassword = password;
+        _pendingDepartment = department;
         _otpSentAt = DateTime.now();
 
         _setState(AuthState.otpSent);
@@ -268,7 +273,8 @@ class AuthProvider with ChangeNotifier {
   Future<bool> resendOtp() async {
     if (_pendingName == null ||
         _pendingEmail == null ||
-        _pendingPassword == null) {
+        _pendingPassword == null ||
+        _pendingDepartment == null) {
       _setError('No pending signup found. Please start over.');
       return false;
     }
@@ -277,6 +283,7 @@ class AuthProvider with ChangeNotifier {
       name: _pendingName!,
       email: _pendingEmail!,
       password: _pendingPassword!,
+      department: _pendingDepartment!,
     );
   }
 
@@ -351,6 +358,22 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Fetch list of departments for signup
+  Future<List<Department>> getDepartments() async {
+    try {
+      final response = await _apiService.getDepartments();
+      if (response.success && response.data != null) {
+        return (response.data as List)
+            .map((item) => Department.fromJson(item))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ Failed to fetch departments: $e');
+      return [];
+    }
+  }
+
   /// Clear any error messages
   void clearError() {
     _clearError();
@@ -400,6 +423,7 @@ class AuthProvider with ChangeNotifier {
     _pendingName = null;
     _pendingEmail = null;
     _pendingPassword = null;
+    _pendingDepartment = null;
     _otpSentAt = null;
   }
 

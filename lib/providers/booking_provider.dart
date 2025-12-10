@@ -97,6 +97,34 @@ class BookingProvider with ChangeNotifier {
       return success;
     } catch (e) {
       _errorMessage = "Failed to update booking status: $e";
+      _errorMessage = "Failed to update booking status: $e";
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> cancelBooking(String bookingId, String reason) async {
+    if (authProvider.token == null || authProvider.token!.isEmpty) {
+      _errorMessage = "Authentication error: Not logged in.";
+      notifyListeners();
+      return false;
+    }
+    
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _apiService.cancelBooking(bookingId, reason);
+      if (success) {
+        // Refresh bookings to reflect changes
+        await fetchMyBookings();
+      }
+      return success;
+    } catch (e) {
+      _errorMessage = "$e";
       return false;
     } finally {
       _isLoading = false;
