@@ -78,7 +78,7 @@ class DevelopersScreen extends StatelessWidget {
                 child: _buildVerticalDeveloperCard(
                   context,
                   name: 'Rishik Reddy Cheruku',
-                  role: 'Backend Developer',
+                  role: 'App Developer',
                   rollNo: 'CB.EN.U4CSE22009',
                   linkedInUrl: 'https://www.linkedin.com/in/rishikreddycheruku/',
                   imagePath: 'assets/images/dev_rishik.png',

@@ -4,7 +4,12 @@ import '../providers/equipment_provider.dart';
 import '../models/department.dart';
 import '../models/lab.dart';
 import '../models/equipment.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/loading_widget.dart';
+import '../utils/colors.dart';
 import 'availability_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class EquipmentSelectionPage extends StatefulWidget {
   const EquipmentSelectionPage({super.key});
@@ -14,10 +19,8 @@ class EquipmentSelectionPage extends StatefulWidget {
 }
 
 class _EquipmentSelectionPageState extends State<EquipmentSelectionPage>
-    with TickerProviderStateMixin {
-  late AnimationController _headerController;
+    with SingleTickerProviderStateMixin {
   late AnimationController _contentController;
-  late Animation<double> _headerAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
@@ -28,19 +31,9 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage>
     provider.loadDepartments();
 
     // Initialize animations
-    _headerController = AnimationController(
+    _contentController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
-    );
-
-    _contentController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    _headerAnimation = CurvedAnimation(
-      parent: _headerController,
-      curve: Curves.easeOutCubic,
     );
 
     _fadeAnimation = CurvedAnimation(
@@ -49,7 +42,7 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage>
     );
 
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
+      begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _contentController,
@@ -57,612 +50,240 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage>
     ));
 
     // Start animations
-    _headerController.forward();
-    Future.delayed(const Duration(milliseconds: 200), () {
-      _contentController.forward();
-    });
+    _contentController.forward();
   }
 
   @override
   void dispose() {
-    _headerController.dispose();
     _contentController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<EquipmentProvider>(context);
+    // The provider is now accessed via Consumer in the body
+    // final provider = Provider.of<EquipmentProvider>(context);
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: provider.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  // Animated Custom Header with Back Button
-                  ScaleTransition(
-                    scale: _headerAnimation,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFFA4123F),
-                            const Color(0xFFC41E3A),
-                            const Color(0xFFA4123F).withOpacity(0.85),
-                          ],
-                        ),
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(35),
-                          bottomRight: Radius.circular(35),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFA4123F).withOpacity(0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text(
+          'Book Equipment',
+          style: TextStyle(
+            color: AppColors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        backgroundColor: AppColors.primaryMaroon,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Consumer<EquipmentProvider>(
+        builder: (context, provider, child) {
+          String? loadingMessage;
+          if (provider.isLoading) {
+            loadingMessage = "Selecting Equipment List...";
+          } else if (provider.isLabsLoading) {
+            loadingMessage = "Fetching Laboratories...";
+          } else if (provider.isEquipmentsLoading) {
+            loadingMessage = "Loading Equipment...";
+          }
+
+          final isAnyLoading = provider.isLoading ||
+                             provider.isLabsLoading ||
+                             provider.isEquipmentsLoading;
+
+          return LoadingOverlay(
+            isLoading: isAnyLoading,
+            message: loadingMessage,
+            backgroundColor: AppColors.background,
+            child: SafeArea( // Moved SafeArea inside LoadingOverlay content
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Intro Card
+                    _buildSelectionCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Back button and branding row
-                          Row(
-                            children: [
-                              // Stylish Back Button
-                              TweenAnimationBuilder<double>(
-                                duration: const Duration(milliseconds: 600),
-                                tween: Tween(begin: 0.0, end: 1.0),
-                                builder: (context, value, child) {
-                                  return Transform.scale(
-                                    scale: value,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.3),
-                                          width: 1.5,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                Colors.black.withOpacity(0.1),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () => Navigator.pop(context),
-                                          borderRadius:
-                                              BorderRadius.circular(14),
-                                          splashColor:
-                                              Colors.white.withOpacity(0.3),
-                                          highlightColor:
-                                              Colors.white.withOpacity(0.2),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(12),
-                                            child: Icon(
-                                              Icons.arrow_back_ios_new_rounded,
-                                              color: Colors.white,
-                                              size: 20,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 16),
-                              // AMRITA branding
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'AMRITA',
-                                      style: TextStyle(
-                                        fontFamily: 'Proxima Nova',
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        letterSpacing: 2,
-                                        shadows: [
-                                          Shadow(
-                                            color: Colors.black26,
-                                            offset: Offset(0, 2),
-                                            blurRadius: 4,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'Lab Management',
-                                      style: TextStyle(
-                                        fontFamily: 'Proxima Nova',
-                                        fontSize: 14,
-                                        color: Colors.white.withOpacity(0.95),
-                                        fontWeight: FontWeight.w500,
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Science icon with pulse animation
-                              TweenAnimationBuilder<double>(
-                                duration: const Duration(milliseconds: 1500),
-                                tween: Tween(begin: 0.0, end: 1.0),
-                                builder: (context, value, child) {
-                                  return Transform.scale(
-                                    scale: 0.9 + (value * 0.1),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(10),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.25),
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.4),
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: const Icon(
-                                        Icons.biotech_rounded,
-                                        color: Colors.white,
-                                        size: 26,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
+                          Text(
+                            'Select Lab & Equipment',
+                            style: GoogleFonts.roboto(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
-                          const SizedBox(height: 20),
-                          // Page title with gradient underline
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Select Equipment',
-                                style: TextStyle(
-                                  fontFamily: 'Proxima Nova',
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TweenAnimationBuilder<double>(
-                                duration: const Duration(milliseconds: 1200),
-                                tween: Tween(begin: 0.0, end: 1.0),
-                                curve: Curves.easeOutCubic,
-                                builder: (context, value, child) {
-                                  return Container(
-                                    height: 3,
-                                    width: 120 * value,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.white,
-                                          Colors.white.withOpacity(0.3),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
+                          const SizedBox(height: 8),
+                          Text(
+                            'Please choose your department and lab to view available equipment.',
+                            style: GoogleFonts.roboto(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 24),
 
-                  // Animated Main Content
-                  Expanded(
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            children: [
-                              // Department Selection Card with stagger animation
-                              _buildAnimatedCard(
-                                delay: 0,
-                                child: _buildSelectionCard(
-                                  context,
-                                  title: 'Department',
-                                  icon: Icons.business_outlined,
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFFA4123F).withOpacity(0.1),
-                                      const Color(0xFFC41E3A).withOpacity(0.05),
-                                    ],
-                                  ),
-                                  child: DropdownButtonFormField<Department>(
-                                    decoration: _buildInputDecoration(
-                                        'Choose Department'),
-                                    value: provider.selectedDept,
-                                    items: provider.departments
-                                        .map((dept) => DropdownMenuItem(
-                                              value: dept,
-                                              child: Text(
-                                                dept.name,
-                                                style: const TextStyle(
-                                                  fontFamily: 'Proxima Nova',
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ))
-                                        .toList(),
-                                    onChanged: (dept) {
-                                      if (dept != null) {
-                                        provider.selectDepartment(dept);
-                                      }
-                                    },
-                                    style: const TextStyle(
-                                      fontFamily: 'Proxima Nova',
-                                      color: Colors.black87,
-                                    ),
-                                    dropdownColor: Colors.white,
-                                    iconEnabledColor: const Color(0xFFA4123F),
-                                  ),
-                                ),
-                              ),
+                    // ... Rest of the form
+                    _buildDropdownSection<Department>(
+                      title: 'Department',
+                      hint: 'Select Department',
+                      value: provider.selectedDept,
+                      items: provider.departments,
+                      onChanged: (Department? dept) {
+                        if (dept != null) {
+                          provider.selectDepartment(dept);
+                        }
+                      },
+                      itemLabelBuilder: (item) => (item as Department).name,
+                      prefixIcon: Icons.business_rounded,
+                    ),
 
-                              const SizedBox(height: 20),
+                    if (provider.selectedDept != null) ...[
+                      const SizedBox(height: 20),
+                      TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 400),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 20 * (1 - value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _buildDropdownSection<Lab>(
+                          title: 'Laboratory',
+                          hint: 'Select Laboratory',
+                          value: provider.selectedLab,
+                          items: provider.labs,
+                          onChanged: (Lab? lab) {
+                            if (lab != null) {
+                              provider.selectLab(lab);
+                            }
+                          },
+                          itemLabelBuilder: (item) => (item as Lab).name,
+                          prefixIcon: Icons.science_rounded,
+                        ),
+                      ),
+                    ],
 
-                              // Lab Selection Card
-                              _buildAnimatedCard(
-                                delay: 100,
-                                child: _buildSelectionCard(
-                                  context,
-                                  title: 'Laboratory',
-                                  icon: Icons.apartment_outlined,
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFF4A90E2).withOpacity(0.1),
-                                      const Color(0xFF5BA3F5).withOpacity(0.05),
-                                    ],
-                                  ),
-                                  child: DropdownButtonFormField<Lab>(
-                                    decoration: _buildInputDecoration(
-                                        'Choose Laboratory'),
-                                    value: provider.selectedLab,
-                                    items: provider.labs
-                                        .map((lab) => DropdownMenuItem(
-                                              value: lab,
-                                              child: Text(
-                                                lab.name,
-                                                style: const TextStyle(
-                                                  fontFamily: 'Proxima Nova',
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ))
-                                        .toList(),
-                                    onChanged: provider.selectedDept == null
-                                        ? null
-                                        : (lab) {
-                                            if (lab != null)
-                                              provider.selectLab(lab);
-                                          },
-                                    style: const TextStyle(
-                                      fontFamily: 'Proxima Nova',
-                                      color: Colors.black87,
-                                    ),
-                                    dropdownColor: Colors.white,
-                                    iconEnabledColor: const Color(0xFFA4123F),
-                                  ),
-                                ),
-                              ),
+                    if (provider.selectedLab != null) ...[
+                      const SizedBox(height: 20),
+                      TweenAnimationBuilder<double>(
+                        duration: const Duration(milliseconds: 400),
+                        tween: Tween(begin: 0.0, end: 1.0),
+                        builder: (context, value, child) {
+                          return Opacity(
+                            opacity: value,
+                            child: Transform.translate(
+                              offset: Offset(0, 20 * (1 - value)),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: _buildDropdownSection<Equipment>(
+                          title: 'Equipment',
+                          hint: 'Select Equipment',
+                          value: provider.selectedEquipment,
+                          items: provider.equipments,
+                          onChanged: (Equipment? equip) {
+                            if (equip != null) {
+                              provider.selectEquipment(equip);
+                            }
+                          },
+                          itemLabelBuilder: (item) => (item as Equipment).name,
+                          prefixIcon: Icons.build_rounded,
+                        ),
+                      ),
+                    ],
 
-                              const SizedBox(height: 20),
+                    const SizedBox(height: 32),
 
-                              // Equipment Selection Card
-                              _buildAnimatedCard(
-                                delay: 200,
-                                child: _buildSelectionCard(
-                                  context,
-                                  title: 'Equipment',
-                                  icon: Icons.precision_manufacturing_outlined,
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      const Color(0xFF50C878).withOpacity(0.1),
-                                      const Color(0xFF66D98C).withOpacity(0.05),
-                                    ],
-                                  ),
-                                  child: DropdownButtonFormField<Equipment>(
-                                    decoration: _buildInputDecoration(
-                                        'Choose Equipment'),
-                                    value: provider.selectedEquipment,
-                                    items: provider.equipments
-                                        .map((equip) => DropdownMenuItem(
-                                              value: equip,
-                                              child: Text(
-                                                equip.name,
-                                                style: const TextStyle(
-                                                  fontFamily: 'Proxima Nova',
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ))
-                                        .toList(),
-                                    onChanged: provider.selectedLab == null
-                                        ? null
-                                        : (equip) {
-                                            if (equip != null) {
-                                              provider.selectEquipment(equip);
-                                            }
-                                          },
-                                    style: const TextStyle(
-                                      fontFamily: 'Proxima Nova',
-                                      color: Colors.black87,
-                                    ),
-                                    dropdownColor: Colors.white,
-                                    iconEnabledColor: const Color(0xFFA4123F),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 40),
-
-                              // Animated Submit Button
-                              _buildAnimatedCard(
-                                delay: 300,
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  width: double.infinity,
-                                  height: 58,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(18),
-                                    gradient: provider.selectedEquipment == null
-                                        ? null
-                                        : LinearGradient(
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                            colors: [
-                                              const Color(0xFFA4123F),
-                                              const Color(0xFFC41E3A),
-                                              const Color(0xFFA4123F)
-                                                  .withOpacity(0.85),
-                                            ],
-                                          ),
-                                    boxShadow:
-                                        provider.selectedEquipment == null
-                                            ? null
-                                            : [
-                                                BoxShadow(
-                                                  color: const Color(0xFFA4123F)
-                                                      .withOpacity(0.4),
-                                                  blurRadius: 16,
-                                                  offset: const Offset(0, 8),
-                                                  spreadRadius: 1,
-                                                ),
-                                              ],
-                                  ),
-                                  child: ElevatedButton(
-                                    onPressed:
-                                        provider.selectedEquipment == null
-                                            ? null
-                                            : () {
-                                                _showSuccessDialog(
-                                                    context, provider);
-                                              },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
-                                      disabledBackgroundColor: Colors.grey[300],
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.check_circle_outline_rounded,
-                                          color:
-                                              provider.selectedEquipment == null
-                                                  ? Colors.grey[600]
-                                                  : Colors.white,
-                                          size: 26,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          'Confirm Selection',
-                                          style: TextStyle(
-                                            fontFamily: 'Proxima Nova',
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: provider.selectedEquipment ==
-                                                    null
-                                                ? Colors.grey[600]
-                                                : Colors.white,
-                                            letterSpacing: 0.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              // Selection Summary with animation
-                              if (provider.selectedDept != null ||
-                                  provider.selectedLab != null ||
-                                  provider.selectedEquipment != null)
-                                _buildAnimatedCard(
-                                  delay: 400,
-                                  child: _buildSelectionSummary(provider),
-                                ),
-                            ],
+                    // Submit Button
+                    SizedBox(
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: provider.selectedEquipment != null
+                            ? () => _showSuccessDialog(context, provider)
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryMaroon,
+                          disabledBackgroundColor: AppColors.buttonDisabled,
+                          elevation: provider.selectedEquipment != null ? 4 : 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          'Continue',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-      ),
-    );
-  }
 
-  Widget _buildAnimatedCard({required int delay, required Widget child}) {
-    return TweenAnimationBuilder<double>(
-      duration: Duration(milliseconds: 600 + delay),
-      tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, _) {
-        return Transform.translate(
-          offset: Offset(0, 30 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSelectionCard(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required Gradient gradient,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-            spreadRadius: 1,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: gradient,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFA4123F).withOpacity(0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
+                    if (provider.selectedEquipment != null) ...[
+                      const SizedBox(height: 24),
+                      _buildSelectionSummary(provider),
+                    ],
                   ],
                 ),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFFA4123F),
-                  size: 24,
-                ),
               ),
-              const SizedBox(width: 14),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontFamily: 'Proxima Nova',
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          child,
-        ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  InputDecoration _buildInputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(
-        fontFamily: 'Proxima Nova',
-        color: Colors.grey[500],
-        fontSize: 16,
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFA4123F), width: 2.5),
-      ),
-      filled: true,
-      fillColor: Colors.grey[50],
-      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-    );
-  }
-
-  Widget _buildSelectionSummary(EquipmentProvider provider) {
+  Widget _buildSelectionCard({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFFA4123F).withOpacity(0.08),
-            const Color(0xFFC41E3A).withOpacity(0.04),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFA4123F).withOpacity(0.25),
-          width: 1.5,
-        ),
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.divider),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFA4123F).withOpacity(0.1),
-            blurRadius: 12,
+            color: Colors.black.withAlpha((255 * 0.05).round()),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
+      child: child,
+    );
+  }
+
+  Widget _buildDropdownSection<T>({
+    required String title,
+    required String hint,
+    required T? value,
+    required List<T> items,
+    required ValueChanged<T?> onChanged,
+    required String Function(T) itemLabelBuilder,
+    required IconData prefixIcon,
+  }) {
+    return _buildSelectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -671,29 +292,112 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFA4123F).withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppColors.primaryMaroon.withAlpha((255 * 0.1).round()),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
-                  Icons.summarize_rounded,
-                  color: Color(0xFFA4123F),
+                child: Icon(
+                  prefixIcon,
+                  color: AppColors.primaryMaroon,
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 10),
-              const Text(
-                'Current Selection',
-                style: TextStyle(
-                  fontFamily: 'Proxima Nova',
-                  fontSize: 17,
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFA4123F),
-                  letterSpacing: 0.3,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
+          DropdownButtonFormField<T>(
+            decoration: _buildInputDecoration(hint),
+            value: value,
+            isExpanded: true,
+            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primaryMaroon),
+            items: items.map((item) {
+              return DropdownMenuItem<T>(
+                value: item,
+                child: Text(
+                  itemLabelBuilder(item),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            dropdownColor: AppColors.white,
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(
+        color: AppColors.textLight,
+        fontSize: 14,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.inputBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.inputBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.inputFocusBorder, width: 1.5),
+      ),
+      filled: true,
+      fillColor: AppColors.inputFill,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+
+  Widget _buildSelectionSummary(EquipmentProvider provider) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.primaryMaroon.withAlpha((255 * 0.05).round()),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primaryMaroon.withAlpha((255 * 0.1).round()),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.summarize_outlined,
+                color: AppColors.primaryMaroon,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Current Selection',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryMaroon,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
           if (provider.selectedDept != null)
             _buildSummaryItem(
                 'Department', provider.selectedDept!.name, Icons.business),
@@ -710,35 +414,27 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage>
 
   Widget _buildSummaryItem(String label, String value, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: const Color(0xFFA4123F)),
-          ),
-          const SizedBox(width: 10),
+          Icon(icon, size: 14, color: AppColors.textSecondary),
+          const SizedBox(width: 8),
           Text(
             '$label: ',
-            style: TextStyle(
-              fontFamily: 'Proxima Nova',
-              fontSize: 14,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w600,
+            style: const TextStyle(
+              fontSize: 13,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
             ),
           ),
           Expanded(
             child: Text(
               value,
               style: const TextStyle(
-                fontFamily: 'Proxima Nova',
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -754,128 +450,86 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage>
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(16),
           ),
-          elevation: 16,
+          elevation: 0,
+          backgroundColor: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.all(28),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white,
-                  const Color(0xFFA4123F).withOpacity(0.02),
-                ],
-              ),
+              color: AppColors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha((255 * 0.1).round()),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 600),
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  curve: Curves.elasticOut,
-                  builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFFA4123F),
-                              const Color(0xFFC41E3A),
-                            ],
-                          ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFA4123F).withOpacity(0.3),
-                              blurRadius: 16,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.check_circle_rounded,
-                          color: Colors.white,
-                          size: 48,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Selection Confirmed!',
-                  style: TextStyle(
-                    fontFamily: 'Proxima Nova',
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(14),
+                    color: AppColors.success.withAlpha((255 * 0.1).round()),
+                    shape: BoxShape.circle,
                   ),
-                  child: Text(
-                    '${provider.selectedDept?.name}\n${provider.selectedLab?.name}\n${provider.selectedEquipment?.name}',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'Proxima Nova',
-                      color: Colors.grey[700],
-                      fontSize: 16,
-                      height: 1.5,
-                    ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: AppColors.success,
+                    size: 40,
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
+                const Text(
+                  'Confirmed!',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'You have selected ${provider.selectedEquipment?.name}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
+                  height: 48,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(); // Close dialog
+                      // Navigate to availability screen
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => EquipmentAvailabilityPage(
+                          builder: (context) => EquipmentAvailabilityPage(
                             equipmentId: provider.selectedEquipment!.id,
                           ),
                         ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFA4123F),
-                      elevation: 8,
-                      shadowColor: const Color(0xFFA4123F).withOpacity(0.4),
+                      backgroundColor: AppColors.primaryMaroon,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 18),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontFamily: 'Proxima Nova',
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward_rounded, size: 20),
-                      ],
+                    child: const Text(
+                      'View Availability',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.white,
+                      ),
                     ),
                   ),
                 ),

@@ -22,6 +22,8 @@ class EquipmentProvider extends ChangeNotifier {
 
   // Loading/Error
   bool isLoading = false;
+  bool isLabsLoading = false;
+  bool isEquipmentsLoading = false;
   String? errorMessage;
 
   ApiService get _apiService => ApiService(token: authProvider.token);
@@ -52,6 +54,7 @@ class EquipmentProvider extends ChangeNotifier {
     selectedDept = dept;
     errorMessage = null;
     labs = [];
+    isLabsLoading = true;
     notifyListeners();
 
     try {
@@ -63,12 +66,13 @@ class EquipmentProvider extends ChangeNotifier {
       errorMessage = "Failed to load labs: $e";
     }
 
+    isLabsLoading = false;
     notifyListeners();
   }
 
   Future<void> selectLab(Lab lab) async {
     selectedLab = lab;
-    isLoading = true;
+    isEquipmentsLoading = true;
     errorMessage = null;
     notifyListeners();
 
@@ -79,7 +83,7 @@ class EquipmentProvider extends ChangeNotifier {
       errorMessage = "Failed to load equipments: $e";
     }
 
-    isLoading = false;
+    isEquipmentsLoading = false;
     notifyListeners();
   }
 
