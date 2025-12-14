@@ -10,9 +10,9 @@ class AppConstants {
       'http://107.21.163.19'; // Replace with actual URL
   static const String sendOtpEndpoint = '/api/auth/send-otp';
   static const String signupEndpoint = '/api/auth/signup';
-  static const String departmentsEndpoint = "/departments";
-  static const String labsByDepartmentEndpoint = "/labs"; // /labs/{deptId}
-  static const String equipmentsByLabEndpoint = "/equipments";
+  static const String departmentsEndpoint = "/api/departments";
+  static const String labsByDepartmentEndpoint = "/api/labs"; // /labs/{deptId}
+  static const String equipmentsByLabEndpoint = "/api/equipments";
   static const String forgotPasswordEndpoint = "/api/auth/forgot-password";
   static const String resetPasswordEndpoint = "/api/auth/reset-password";
   // API Timeouts

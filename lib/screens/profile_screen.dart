@@ -1,4 +1,3 @@
-import 'package:amrita_ulabs/screens/edit_profile_screen.dart';
 import 'package:amrita_ulabs/screens/help_faq_screen.dart';
 import 'package:amrita_ulabs/screens/privacy_policy_screen.dart';
 import 'package:amrita_ulabs/screens/developers_screen.dart';
@@ -176,24 +175,6 @@ class ProfileScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          _buildMenuGroup(
-            context,
-            title: 'Account',
-            items: [
-              MenuItemData(
-                icon: Icons.person_outline,
-                title: 'Edit Profile',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const EditProfileScreen()),
-                  );
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           _buildMenuGroup(
             context,
             title: 'Support',

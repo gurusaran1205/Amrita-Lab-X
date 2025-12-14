@@ -10,6 +10,7 @@ import '../widgets/loading_widget.dart';
 import '../utils/colors.dart';
 import '../utils/constants.dart';
 import '../utils/validators.dart';
+import '../models/department.dart';
 import 'otp_verification_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -28,6 +29,11 @@ class _SignupScreenState extends State<SignupScreen> {
   final _nameFocusNode = FocusNode();
   final _emailFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
+  final _departmentFocusNode = FocusNode();
+
+  List<Department> _departments = [];
+  String? _selectedDepartmentId;
+  bool _isLoadingDepartments = false;
 
   bool _isFormValid = false;
 
@@ -35,6 +41,29 @@ class _SignupScreenState extends State<SignupScreen> {
   void initState() {
     super.initState();
     _setupFormValidation();
+    _fetchDepartments();
+  }
+
+  Future<void> _fetchDepartments() async {
+    setState(() {
+      _isLoadingDepartments = true;
+    });
+
+    try {
+      final authProvider = context.read<AuthProvider>();
+      final departments = await authProvider.getDepartments();
+      if (mounted) {
+        setState(() {
+          _departments = departments;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingDepartments = false;
+        });
+      }
+    }
   }
 
   @override
@@ -45,6 +74,7 @@ class _SignupScreenState extends State<SignupScreen> {
     _nameFocusNode.dispose();
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
+    _departmentFocusNode.dispose();
     super.dispose();
   }
 
@@ -54,6 +84,7 @@ class _SignupScreenState extends State<SignupScreen> {
         _isFormValid = _nameController.text.trim().isNotEmpty &&
             _emailController.text.trim().isNotEmpty &&
             _passwordController.text.isNotEmpty &&
+            _selectedDepartmentId != null &&
             Validators.validateEmail(_emailController.text) == null &&
             Validators.validatePassword(_passwordController.text) == null &&
             Validators.validateName(_nameController.text) == null;
@@ -76,6 +107,7 @@ class _SignupScreenState extends State<SignupScreen> {
       name: _nameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
+      department: _selectedDepartmentId!,
     );
 
     if (success) {
@@ -282,8 +314,52 @@ class _SignupScreenState extends State<SignupScreen> {
             controller: _passwordController,
             validator: Validators.validatePassword,
             focusNode: _passwordFocusNode,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => _handleSendOtp(),
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => _departmentFocusNode.requestFocus(),
+          ),
+
+          const SizedBox(height: AppConstants.defaultPadding),
+
+          // Department Dropdown
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              labelText: 'Department',
+              prefixIcon: Icon(Icons.school_outlined),
+              border: OutlineInputBorder(),
+            ),
+            value: _selectedDepartmentId,
+            items: _departments.map((dept) {
+              return DropdownMenuItem(
+                value: dept.id,
+                child: Text(
+                  dept.name,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedDepartmentId = value;
+                // Trigger validation check manually since it's not a text field controller
+                _isFormValid = _nameController.text.trim().isNotEmpty &&
+                    _emailController.text.trim().isNotEmpty &&
+                    _passwordController.text.isNotEmpty &&
+                    _selectedDepartmentId != null &&
+                    Validators.validateEmail(_emailController.text) == null &&
+                    Validators.validatePassword(_passwordController.text) ==
+                        null &&
+                    Validators.validateName(_nameController.text) == null;
+              });
+            },
+            validator: (value) =>
+                value == null ? 'Please select a department' : null,
+            focusNode: _departmentFocusNode,
+            hint: _isLoadingDepartments
+                ? const Text('Loading departments...')
+                : const Text('Select Department'),
+            disabledHint: _isLoadingDepartments
+                ? const Text('Loading departments...')
+                : null,
           ),
         ],
       ),

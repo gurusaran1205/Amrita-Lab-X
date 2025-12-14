@@ -53,11 +53,13 @@ class SendOtpRequest {
   final String name;
   final String email;
   final String password;
+  final String department;
 
   const SendOtpRequest({
     required this.name,
     required this.email,
     required this.password,
+    required this.department,
   });
 
   /// Convert to JSON for API request
@@ -66,12 +68,13 @@ class SendOtpRequest {
       'name': name,
       'email': email,
       'password': password,
+      'department': department,
     };
   }
 
   @override
   String toString() {
-    return 'SendOtpRequest{name: $name, email: $email}'; // Don't log password
+    return 'SendOtpRequest{name: $name, email: $email, department: $department}'; // Don't log password
   }
 }
 

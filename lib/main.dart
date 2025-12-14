@@ -37,6 +37,7 @@ import 'screens/success_screen.dart';
 import 'providers/equipment_provider.dart';
 import 'screens/equipment_selection.dart';
 import 'screens/forgot_password_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
   runApp(const AmritaULabsApp());
@@ -90,10 +91,11 @@ class AmritaULabsApp extends StatelessWidget {
         title: AppConstants.appName,
         debugShowCheckedModeBanner: false,
         theme: _buildAppTheme(),
-        initialRoute: '/login',
+        initialRoute: '/splash',
 
         // NO DUPLICATES OF edit/delete HERE
         routes: {
+          '/splash': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
           '/signup': (context) => const SignupScreen(),
           '/otp': (context) => const OtpVerificationScreen(),
