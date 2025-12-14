@@ -2,6 +2,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:excel/excel.dart';
+import 'package:csv/csv.dart';
+import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/colors.dart';
@@ -24,35 +27,35 @@ class _ReportsScreenState extends State<ReportsScreen> {
       'subtitle': 'Export equipment usage history',
       'icon': Icons.history_edu,
       'endpoint': '/api/reports/export-usage',
-      'fileName': 'equipment_log.csv',
+      'fileName': 'equipment_log.xlsx',
     },
     {
       'title': 'Booking & Cancellation',
       'subtitle': 'Report of all bookings and cancellations',
       'icon': Icons.event_note,
       'endpoint': '/api/reports/export-bookings',
-      'fileName': 'booking_report.csv',
+      'fileName': 'booking_report.xlsx',
     },
     {
       'title': 'User Activity Summary',
       'subtitle': 'Summary of user registrations and activity',
       'icon': Icons.people_alt_outlined,
       'endpoint': '/api/reports/export-users',
-      'fileName': 'user_activity.csv',
+      'fileName': 'user_activity.xlsx',
     },
     {
       'title': 'Cross-Department Report',
       'subtitle': 'Inter-departmental resource usage',
       'icon': Icons.compare_arrows,
       'endpoint': '/api/reports/export-cross-dept',
-      'fileName': 'cross_dept_report.csv',
+      'fileName': 'cross_dept_report.xlsx',
     },
     {
       'title': 'Audit Logs',
       'subtitle': 'System-wide audit trail (Super Admin)',
       'icon': Icons.security,
       'endpoint': '/api/reports/export-audit',
-      'fileName': 'audit_logs.csv',
+      'fileName': 'audit_logs.xlsx',
     },
   ];
 
@@ -73,18 +76,37 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final response = await _apiService.downloadReport(endpoint, token);
 
       if (response.statusCode == 200 && response.data != null) {
-        // Create XFile from bytes (Cross-platform compatible)
-        final bytes = Uint8List.fromList(response.data as List<int>);
+        // 1. Convert downloaded bytes (CSV) to String
+        final csvContent = utf8.decode(response.data as List<int>, allowMalformed: true);
         
-        final xFile = XFile.fromData(
-          bytes,
-          name: fileName,
-          mimeType: 'text/csv', 
-        );
+        // 2. Parse CSV to List<List<dynamic>>
+        List<List<dynamic>> rows = const CsvToListConverter().convert(csvContent);
 
-        // Share/Save the file
-        if (mounted) {
-           await Share.shareXFiles([xFile], text: 'Here is the $title');
+        // 3. Create Excel file
+        var excel = Excel.createExcel();
+        // Rename the default Sheet1 to 'Report'
+        Sheet sheetObject = excel['Report'];
+        excel.setDefaultSheet('Report');
+
+        // 4. Append rows to Excel
+        for (var row in rows) {
+          sheetObject.appendRow(row.map((e) => TextCellValue(e.toString())).toList());
+        }
+
+        // 5. Encode Excel to bytes
+        var fileBytes = excel.save();
+
+        if (fileBytes != null) {
+          final xFile = XFile.fromData(
+            Uint8List.fromList(fileBytes),
+            name: fileName,
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          );
+
+          // 6. Share/Save the file
+          if (mounted) {
+             await Share.shareXFiles([xFile], text: 'Here is the $title');
+          }
         }
       } else {
         throw Exception(response.message ?? "Failed to download");
