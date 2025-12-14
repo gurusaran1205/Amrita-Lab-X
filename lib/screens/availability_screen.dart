@@ -9,8 +9,13 @@ import 'booking_confirmation_screen.dart';
 
 class EquipmentAvailabilityPage extends StatefulWidget {
   final String equipmentId;
+  final String equipmentName;
 
-  const EquipmentAvailabilityPage({super.key, required this.equipmentId});
+  const EquipmentAvailabilityPage({
+    super.key,
+    required this.equipmentId,
+    required this.equipmentName,
+  });
 
   @override
   State<EquipmentAvailabilityPage> createState() =>
@@ -174,6 +179,7 @@ class _EquipmentAvailabilityPageState extends State<EquipmentAvailabilityPage>
           MaterialPageRoute(
             builder: (_) => BookingConfirmationScreen(
               equipmentId: widget.equipmentId,
+              equipmentName: widget.equipmentName,
               startDate: startDate,
               endDate: endDate,
             ),
