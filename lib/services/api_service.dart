@@ -38,10 +38,6 @@ class ApiService {
       };
 
   /// Send OTP to user's email
-  ///
-  /// Endpoint: POST /api/auth/send-otp
-  /// Request: { "name": "John Doe", "email": "john@example.com", "password": "password123" }
-  /// Response: { "message": "OTP has been sent to your email." }
   Future<ApiResponse<OtpResponse>> sendOtp(SendOtpRequest request) async {
     try {
       final url = Uri.parse('$_baseUrl${AppConstants.sendOtpEndpoint}');
@@ -81,10 +77,6 @@ class ApiService {
   }
 
   /// Verify OTP and complete signup
-  ///
-  /// Endpoint: POST /api/auth/signup
-  /// Request: { "email": "john@example.com", "otp": "123456" }
-  /// Response: { "_id": "...", "name": "John Doe", "email": "john@example.com", "role": "user", "token": "..." }
   Future<ApiResponse<User>> verifyOtpAndSignup(VerifyOtpRequest request) async {
     try {
       final url = Uri.parse('$_baseUrl${AppConstants.signupEndpoint}');
@@ -396,10 +388,6 @@ class ApiService {
   // Add this method to your existing ApiService class
 
   /// User Login
-  ///
-  /// Endpoint: POST /api/auth/login
-  /// Request: { "email": "john.doe@example.com", "password": "a-strong-password-123" }
-  /// Response: { "_id": "...", "name": "John Doe", "email": "john@example.com", "role": "user", "token": "..." }
   Future<ApiResponse<User>> login(LoginRequest request) async {
     try {
       final url = Uri.parse('$_baseUrl${AppConstants.loginEndpoint}');
@@ -633,10 +621,6 @@ class ApiService {
   }
 
   /// Reset Password with OTP
-  ///
-  /// Endpoint: POST /api/auth/reset-password
-  /// Request: { "email": "user@example.com", "otp": "123456", "newPassword": "new-password" }
-  /// Response: { "message": "Password reset successfully." }
   Future<ApiResponse<ResetPasswordResponse>> resetPassword(
       ResetPasswordRequest request) async {
     try {
@@ -669,6 +653,119 @@ class ApiService {
       );
     } catch (e) {
       print('❌ Reset Password Error: $e');
+      return ApiResponse.error(
+        message: AppConstants.genericError,
+        statusCode: 500,
+      );
+    }
+  }
+
+  /// Get pending logout sessions
+  Future<ApiResponse<List<dynamic>>> getPendingSessions(String token) async {
+    try {
+      final url = Uri.parse('$_baseUrl/api/sessions/pending');
+      final response = await _client.get(
+        url,
+        headers: {
+          ..._headers,
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(AppConstants.connectionTimeout);
+
+      print("📥 Pending Sessions Response: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return ApiResponse.success(
+          data: data,
+          message: "Pending sessions fetched successfully",
+          statusCode: 200,
+        );
+      } else {
+        return ApiResponse.error(
+          message: "Failed to fetch pending sessions",
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      print("❌ Pending Sessions API Error: $e");
+      return ApiResponse.error(
+        message: AppConstants.genericError,
+        statusCode: 500,
+      );
+    }
+  }
+
+  /// Approve logout for a session
+  Future<ApiResponse<bool>> approveLogout(String sessionId, String token) async {
+    try {
+      final url = Uri.parse('$_baseUrl/api/sessions/$sessionId/approve');
+      final response = await _client.put(
+        url,
+        headers: {
+          ..._headers,
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(AppConstants.connectionTimeout);
+
+      print("📥 Approve Logout Response: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        return ApiResponse.success(
+          data: true,
+          message: "Session logout approved successfully",
+          statusCode: 200,
+        );
+      } else {
+        final body = jsonDecode(response.body);
+        return ApiResponse.error(
+          message: body['message'] ?? "Failed to approve logout",
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      print("❌ Approve Logout API Error: $e");
+      return ApiResponse.error(
+        message: AppConstants.genericError,
+        statusCode: 500,
+      );
+    }
+  }
+
+  /// Download Report
+  /// Returns raw bytes of the file
+  Future<ApiResponse<List<int>>> downloadReport(String endpoint, String token) async {
+    try {
+      // Endpoint provided might be full URL or partial path. 
+      // Assuming partial path based on user request "api/reports/..."
+      final url = Uri.parse('$_baseUrl$endpoint');
+      
+      print("📥 Downloading Report from: $url");
+
+      final response = await _client.get(
+        url,
+        headers: {
+          ..._headers,
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(const Duration(seconds: 60)); // Longer timeout for reports
+
+      print("📥 Download Response: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        return ApiResponse.success(
+          data: response.bodyBytes,
+          message: "Report downloaded successfully",
+          statusCode: 200,
+        );
+      } else {
+        return ApiResponse.error(
+          message: "Failed to download report",
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      print("❌ Download Report Error: $e");
       return ApiResponse.error(
         message: AppConstants.genericError,
         statusCode: 500,

@@ -1,8 +1,10 @@
 import 'package:amrita_ulabs/providers/availability_provider.dart';
 import 'package:amrita_ulabs/providers/booking_provider.dart';
 import 'package:amrita_ulabs/providers/user_provider.dart';
+import 'package:amrita_ulabs/providers/session_provider.dart'; // Added import
 import 'package:amrita_ulabs/screens/admin_screen/add_department_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/approve_requests_screen.dart';
+import 'package:amrita_ulabs/screens/admin_screen/approve_logout_screen.dart'; // Added import
 import 'package:amrita_ulabs/screens/admin_screen/block_users_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/lab_staff_dashboard_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_lab_screen.dart';
@@ -78,6 +80,11 @@ class AmritaULabsApp extends StatelessWidget {
               authProvider: Provider.of<AuthProvider>(context, listen: false)),
           update: (context, auth, _) => UserProvider(authProvider: auth),
         ),
+        ChangeNotifierProxyProvider<AuthProvider, SessionProvider>(
+          create: (context) => SessionProvider(
+              authProvider: Provider.of<AuthProvider>(context, listen: false)),
+          update: (context, auth, _) => SessionProvider(authProvider: auth),
+        ),
       ],
       child: MaterialApp(
         title: AppConstants.appName,
@@ -107,6 +114,7 @@ class AmritaULabsApp extends StatelessWidget {
           '/add_equipment': (context) => const AddEquipmentScreen(),
           '/qr_management': (context) => const QrManagementScreen(),
           '/approve_requests': (context) => const ApproveRequestsScreen(),
+          '/approve_logout': (context) => const ApproveLogoutScreen(), // Added route
           '/block_users': (context) => const BlockUsersScreen(),
           '/manage_departments': (context) => const ManageDepartmentsScreen(),
           '/delete_department': (context) => const DeleteDepartmentScreen(),
@@ -176,16 +184,6 @@ class AmritaULabsApp extends StatelessWidget {
             );
           },
         },
-
-        //if (settings.name == '/delete_department') {
-        // final args = settings.arguments as Map<String, String>?;
-        //if (args == null) {
-        //return MaterialPageRoute(builder: (_) => const ErrorScreen());
-        //}
-        //return MaterialPageRoute(
-        // builder: (_) => DeleteDepartmentScreen(departmentId: args['id']!),
-        //);
-        //}
       ),
     );
   }
