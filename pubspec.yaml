@@ -23,6 +23,7 @@ dependencies:
   flutter_svg: ^2.0.9
   google_fonts: ^6.1.0
   pin_code_fields: ^8.0.1
+  audioplayers: ^6.0.0
 
   # Storage & Utils
   shared_preferences: ^2.3.2
@@ -48,7 +49,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
-    - assets/icons/
+    - assets/audio/
 
   fonts:
     - family: AmritaCustom

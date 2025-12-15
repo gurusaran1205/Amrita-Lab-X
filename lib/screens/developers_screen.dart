@@ -1,9 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/colors.dart';
 
-class DevelopersScreen extends StatelessWidget {
+class DevelopersScreen extends StatefulWidget {
   const DevelopersScreen({super.key});
+
+  @override
+  State<DevelopersScreen> createState() => _DevelopersScreenState();
+}
+
+class _DevelopersScreenState extends State<DevelopersScreen> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isPlaying = false;
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _toggleAudio() async {
+    try {
+      if (_isPlaying) {
+        await _audioPlayer.pause();
+      } else {
+        await _audioPlayer.setSource(AssetSource('audio/f1.mp3'));
+        await _audioPlayer.resume();
+      }
+      setState(() {
+        _isPlaying = !_isPlaying;
+      });
+    } catch (e) {
+      debugPrint('Error playing audio: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not play audio: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,28 +52,66 @@ class DevelopersScreen extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            _audioPlayer.stop(); // Stop audio when going back
+            Navigator.pop(context);
+          },
         ),
-        title: const Text(
+        title: Text(
           'Meet the Developers',
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             color: AppColors.white,
             fontSize: 22,
             fontWeight: FontWeight.bold,
             letterSpacing: 0.5,
           ),
         ),
+        actions: [
+          IconButton(
+            onPressed: _toggleAudio,
+            icon: Icon(
+              _isPlaying ? Icons.music_note : Icons.music_off_outlined,
+              color: AppColors.white,
+            ),
+            tooltip: 'Mood Refresh',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
         child: Column(
           children: [
-            const Text(
+
+            Text(
               'The Minds Behind AmritaULABS',
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 fontSize: 16,
                 color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Mood Refresh Button (Prominent)
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: _toggleAudio,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isPlaying ? AppColors.white : AppColors.primaryMaroon,
+                  foregroundColor: _isPlaying ? AppColors.primaryMaroon : AppColors.white,
+                  elevation: 4,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                    side: BorderSide(color: AppColors.primaryMaroon.withOpacity(0.2)),
+                  ),
+                ),
+                icon: Icon(_isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill),
+                label: Text(
+                  _isPlaying ? 'Pause Mood' : 'Mood Refresh',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             const SizedBox(height: 32),
@@ -100,6 +175,7 @@ class DevelopersScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary.withOpacity(0.8),
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
@@ -166,11 +242,11 @@ class DevelopersScreen extends StatelessWidget {
                     child: Center(
                       child: Text(
                         name[0],
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primaryMaroon,
-                        ),
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryMaroon,
+                          ),
                       ),
                     ),
                   );
@@ -184,8 +260,8 @@ class DevelopersScreen extends StatelessWidget {
           Text(
             name,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14, // Slightly smaller to fit 2 columns
+            style: GoogleFonts.poppins(
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
               height: 1.2,
@@ -205,7 +281,7 @@ class DevelopersScreen extends StatelessWidget {
             child: Text(
               role.toUpperCase(),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryMaroon,
@@ -219,7 +295,7 @@ class DevelopersScreen extends StatelessWidget {
           Text(
             rollNo,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 10,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,

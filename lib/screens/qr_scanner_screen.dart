@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../utils/colors.dart';
 import '../services/equip_api.dart';
 import '../providers/auth_provider.dart';
@@ -169,19 +170,21 @@ class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProv
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.primaryMaroon,
         elevation: 0,
-        title: const Text(
+        iconTheme: const IconThemeData(color: AppColors.white),
+        title: Text(
           'QR Scanner',
-          style: TextStyle(
-            color: AppColors.textPrimary,
+          style: GoogleFonts.poppins(
+            color: AppColors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.help_outline, color: AppColors.textSecondary),
+            icon: const Icon(Icons.help_outline, color: AppColors.white),
             onPressed: _showHelpDialog,
           ),
         ],
@@ -222,7 +225,10 @@ class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProv
                           ElevatedButton.icon(
                             onPressed: _startCamera,
                             icon: const Icon(Icons.camera_alt),
-                            label: const Text('Start Scanning'),
+                            label: Text(
+                              'Start Scanning',
+                              style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryMaroon,
                               foregroundColor: Colors.white,
@@ -291,7 +297,8 @@ class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProv
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
                       'Session Log',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
@@ -299,10 +306,10 @@ class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProv
                   ),
                   Expanded(
                     child: _messageLog.isEmpty
-                        ? const Center(
+                        ? Center(
                             child: Text(
                               'No scans yet',
-                              style: TextStyle(color: AppColors.textSecondary),
+                              style: GoogleFonts.inter(color: AppColors.textSecondary),
                             ),
                           )
                         : ListView.builder(
@@ -319,7 +326,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProv
                                 ),
                                 child: Text(
                                   _messageLog[index],
-                                  style: const TextStyle(fontSize: 13),
+                                  style: GoogleFonts.inter(fontSize: 13),
                                 ),
                               );
                             },
@@ -362,7 +369,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProv
               const SizedBox(height: 4),
               Text(
                 label,
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: isSelected ? AppColors.white : AppColors.textSecondary,
@@ -413,7 +420,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProv
                   ),
                   child: Text(
                     _getOverlayText(),
-                    style: const TextStyle(color: Colors.white),
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ),
@@ -439,18 +450,19 @@ class _QRScannerScreenState extends State<QRScannerScreen> with SingleTickerProv
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('How to Scan'),
-        content: const Column(
+        title: Text('How to Scan', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('1. Select the correct mode (Enter Lab, Equipment, or Logout).'),
-            SizedBox(height: 8),
-            Text('2. Point the camera at the corresponding QR code.'),
-            SizedBox(height: 8),
-            Text('3. Wait for the scan to process.'),
-            SizedBox(height: 16),
-            Text('Note: Ensure you are scanning the correct type of QR code for the selected mode.'),
+            Text('1. Select the correct mode (Enter Lab, Equipment, or Logout).', style: GoogleFonts.inter()),
+            const SizedBox(height: 8),
+            Text('2. Point the camera at the corresponding QR code.', style: GoogleFonts.inter()),
+            const SizedBox(height: 8),
+            Text('3. Wait for the scan to process.', style: GoogleFonts.inter()),
+            const SizedBox(height: 16),
+            Text('Note: Ensure you are scanning the correct type of QR code for the selected mode.', 
+              style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic)),
           ],
         ),
         actions: [

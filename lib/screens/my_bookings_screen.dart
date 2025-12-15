@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../utils/colors.dart';
 import '../providers/booking_provider.dart';
@@ -39,23 +40,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.primaryMaroon,
         elevation: 0,
-        title: const Text(
+        iconTheme: const IconThemeData(color: AppColors.white),
+        title: Text(
           'My Bookings',
-          style: TextStyle(
-            color: AppColors.textPrimary,
+          style: GoogleFonts.poppins(
+            color: AppColors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.primaryMaroon,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primaryMaroon,
+          labelColor: AppColors.white,
+          unselectedLabelColor: AppColors.white.withOpacity(0.7),
+          indicatorColor: AppColors.white,
           indicatorWeight: 3,
-          labelStyle: const TextStyle(
+          labelStyle: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -82,7 +84,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                   const SizedBox(height: 16),
                   Text(
                     'Error loading bookings',
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 16),
+                    style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 16),
                   ),
                   TextButton(
                     onPressed: () {
@@ -198,16 +200,16 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           const SizedBox(height: 16),
           Text(
             message,
-            style: const TextStyle(
+            style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Book equipment to get started',
-            style: TextStyle(
+            style: GoogleFonts.inter(
               fontSize: 14,
               color: AppColors.textLight,
             ),
@@ -269,7 +271,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                         children: [
                           Text(
                             booking.equipment.name,
-                            style: const TextStyle(
+                            style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
@@ -284,13 +286,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
                                 color: AppColors.textSecondary,
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                'Lab ID: ${booking.equipment.labId}', // Displaying Lab ID as Name is not available in Booking model
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
+                                Text(
+                                  'Lab ID: ${booking.equipment.labId}', // Displaying Lab ID as Name is not available in Booking model
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
-                              ),
                             ],
                           ),
                         ],
@@ -468,7 +470,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
       ),
       child: Text(
         status.toUpperCase(),
-        style: TextStyle(
+        style: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: color,
@@ -487,14 +489,14 @@ class _MyBookingsScreenState extends State<MyBookingsScreen>
           children: [
             Text(
               label,
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 11,
                 color: AppColors.textLight,
               ),
             ),
             Text(
               value,
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,

@@ -3,6 +3,7 @@ import 'package:amrita_ulabs/screens/privacy_policy_screen.dart';
 import 'package:amrita_ulabs/screens/developers_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
 import '../utils/colors.dart';
 
@@ -34,22 +35,36 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildAppBar(BuildContext context) {
-    return const SliverAppBar(
-      expandedHeight: 100,
+    return SliverAppBar(
+      expandedHeight: 100,// Increased height for better proportions
       floating: false,
       pinned: true,
       backgroundColor: AppColors.primaryMaroon,
+      elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
           'Profile',
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             color: AppColors.white,
-            fontSize: 20,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
           ),
         ),
-        centerTitle: false,
-        titlePadding: EdgeInsets.only(left: 20, bottom: 16),
+        centerTitle: true,
+        titlePadding: const EdgeInsets.only(left: 10,bottom: 16),
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryMaroon,
+                AppColors.primaryMaroon.withOpacity(0.9),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -61,15 +76,15 @@ class ProfileScreen extends StatelessWidget {
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: AppColors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha((255 * 0.05).round()),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+                color: AppColors.primaryMaroon.withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -87,15 +102,21 @@ class ProfileScreen extends StatelessWidget {
                         end: Alignment.bottomRight,
                         colors: [
                           AppColors.primaryMaroon,
-                          AppColors.primaryMaroon
-                              .withAlpha((255 * 0.7).round()),
+                          AppColors.primaryMaroon.withOpacity(0.8),
                         ],
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryMaroon.withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: Text(
                         _getInitials(user?.name ?? 'User'),
-                        style: const TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 36,
                           fontWeight: FontWeight.bold,
                           color: AppColors.white,
@@ -107,16 +128,17 @@ class ProfileScreen extends StatelessWidget {
                     bottom: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: AppColors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withAlpha((255 * 0.1).round()),
+                            color: Colors.black.withOpacity(0.1),
                             blurRadius: 4,
                           ),
                         ],
+                        border: Border.all(color: AppColors.white, width: 2),
                       ),
                       child: const Icon(
                         Icons.verified,
@@ -130,8 +152,9 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 user?.name ?? 'User',
-                style: const TextStyle(
-                  fontSize: 24,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
@@ -139,25 +162,30 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 user?.email ?? 'email@example.com',
-                style: const TextStyle(
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryMaroon.withAlpha((255 * 0.1).round()),
+                  color: AppColors.primaryMaroon.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: AppColors.primaryMaroon.withOpacity(0.2)),
                 ),
                 child: Text(
                   user?.role.toUpperCase() ?? 'STUDENT',
-                  style: const TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primaryMaroon,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),
@@ -239,13 +267,14 @@ class ProfileScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Text(
               title,
-              style: const TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -270,7 +299,7 @@ class ProfileScreen extends StatelessWidget {
       leading: Icon(item.icon, color: AppColors.textSecondary),
       title: Text(
         item.title,
-        style: const TextStyle(
+        style: GoogleFonts.inter(
           fontSize: 15,
           fontWeight: FontWeight.w500,
           color: AppColors.textPrimary,
@@ -300,12 +329,12 @@ class ProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.logout, color: AppColors.error),
             SizedBox(width: 12),
             Text(
               'Logout',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: AppColors.error,
@@ -387,34 +416,34 @@ class ProfileScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [ // Removed const
             Text(
               'AmritaULABS',
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'Version 1.0.0',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppColors.textSecondary,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'A comprehensive lab equipment booking and management system for Amrita University students and faculty.',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 14,
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               '© 2025 Amrita Vishwa Vidyapeetham',
-              style: TextStyle(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 color: AppColors.textSecondary,
               ),

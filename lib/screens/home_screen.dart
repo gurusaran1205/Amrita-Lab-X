@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../providers/auth_provider.dart';
 import '../providers/booking_provider.dart';
 import '../models/booking.dart';
 import 'package:intl/intl.dart';
+import 'package:google_fonts/google_fonts.dart'; // Added dependency
 import '../utils/colors.dart';
 
 /// Professional home screen for AmritaULABS
@@ -15,7 +18,46 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Method to handle pull-to-refresh
+  final ScrollController _scrollController = ScrollController();
+  bool _isCollapsed = false;
+  late DateTime _currentTime;
+  late Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTime = DateTime.now();
+    _scrollController.addListener(_onScroll);
+    // Update time every second
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTime = DateTime.now();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    // Check if app bar is collapsed (threshold can be adjusted)
+    final isCollapsed = _scrollController.hasClients && 
+                        _scrollController.offset > (160 - kToolbarHeight - 20);
+    
+    if (isCollapsed != _isCollapsed) {
+      setState(() {
+        _isCollapsed = isCollapsed;
+      });
+    }
+  }
+
   // Method to handle pull-to-refresh
   Future<void> _refreshData() async {
     // Fetch real data from providers
@@ -36,227 +78,244 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refreshData,
-          color: AppColors.primaryMaroon,
-          child: CustomScrollView(
-            slivers: [
-              _buildAppBar(context),
-              SliverToBoxAdapter(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 24),
-                    _buildQuickActions(context),
-                    const SizedBox(height: 24),
-                    _buildSloganCard(context),
-                    const SizedBox(height: 24),
-                    _buildRecentBookings(context),
-                    const SizedBox(height: 24),
-                  ],
-                ),
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        color: AppColors.primaryMaroon,
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            _buildAppBar(context),
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  _buildQuickActions(context),
+                  const SizedBox(height: 24),
+                  _buildSloganCard(context),
+                  const SizedBox(height: 24),
+                  _buildRecentBookings(context),
+                  const SizedBox(height: 24),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildAppBar(BuildContext context) {
+    final dateStr = DateFormat('MMM dd').format(_currentTime);
+    final dayStr = DateFormat('EEE').format(_currentTime);
+    final timeStr = DateFormat('hh:mm a').format(_currentTime);
+    final fullDateStr = '$dayStr, $dateStr';
+
     return SliverAppBar(
-      expandedHeight: 110,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      expandedHeight: 190,
       floating: false,
       pinned: true,
       backgroundColor: AppColors.primaryMaroon,
       elevation: 0,
-      flexibleSpace: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          final appBarHeight = constraints.biggest.height;
-          final isExpanded = appBarHeight > kToolbarHeight + 50;
-
-          return FlexibleSpaceBar(
-            titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            centerTitle: false,
-            title: Consumer<AuthProvider>(
-              builder: (context, authProvider, child) {
-                final user = authProvider.user;
-
-                // Show welcome message only when expanded
-                if (isExpanded) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome back,',
-                        style: TextStyle(
-                          color: AppColors.white.withAlpha((255 * 0.9).round()),
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        user?.name ?? 'Student',
-                        style: const TextStyle(
-                          color: AppColors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  );
-                } else {
-                  // Show normal app title when collapsed
-                  return const Text(
-                    'AmritaULABS',
-                    style: TextStyle(
+      leading: Container(), // Hide default back button/drawer icon if any
+      leadingWidth: 0,
+      actions: [
+        if (_isCollapsed) // Only show logout in AppBar actions when collapsed
+          IconButton(
+            onPressed: () => _handleLogout(context),
+            icon: const Icon(Icons.logout_rounded, color: AppColors.white),
+            tooltip: 'Logout',
+          ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        titlePadding: EdgeInsets.zero,
+        centerTitle: true,
+        title: _isCollapsed
+            ? SizedBox(
+                height: kToolbarHeight,
+                child: Center(
+                  child: Text(
+                    'AMRITAULABS',
+                    style: GoogleFonts.poppins( // Updated Font
                       color: AppColors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  );
-                }
-              },
-            ),
-            background: Stack(
-              fit: StackFit.expand,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primaryMaroon,
-                        AppColors.primaryMaroon.withAlpha((255 * 0.85).round()),
-                      ],
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),
-                Positioned(
-                  top: 60, // Positioned below the toolbar
-                  right: 20,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () async {
-                        // Show confirmation dialog
-                        final shouldLogout = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Logout'),
-                            content: const Text('Are you sure you want to logout?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text(
-                                  'Logout',
-                                  style: TextStyle(color: Colors.red),
+              )
+            : null, // Hide standard title when expanded to use custom background layout
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryMaroon,
+                AppColors.primaryMaroon.withAlpha((255 * 0.9).round()),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Stack(
+                children: [
+                   // Top Row: Title, Subtitle, Logout
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       Row(
+                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                         crossAxisAlignment: CrossAxisAlignment.start,
+                         children: [
+                           Column(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: [
+                               Text(
+                                 'AMRITAULABS',
+                                 style: GoogleFonts.poppins( // Updated Font
+                                   color: AppColors.white,
+                                   fontSize: 28,
+                                   fontWeight: FontWeight.bold,
+                                   letterSpacing: 1.0,
+                                 ),
+                               ),
+                               const SizedBox(height: 2),
+                               Text(
+                                 'Laboratory Management System',
+                                 style: GoogleFonts.inter( // Updated Font
+                                   color: AppColors.white.withOpacity(0.9),
+                                   fontSize: 13,
+                                   fontWeight: FontWeight.w400,
+                                   letterSpacing: 0.2,
+                                 ),
+                               ),
+                             ],
+                           ),
+                           // Logout Icon in expanded state
+                           IconButton(
+                             onPressed: () => _handleLogout(context),
+                             icon: const Icon(Icons.logout_rounded, color: AppColors.white),
+                             tooltip: 'Logout',
+                             padding: EdgeInsets.zero,
+                             constraints: const BoxConstraints(),
+                           ),
+                         ],
+                       ),
+                    ],
+                  ),
+                  
+                  // Bottom Row: Welcome and Time
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Welcome Section
+                        Consumer<AuthProvider>(
+                          builder: (context, authProvider, child) {
+                            final user = authProvider.user;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Welcome back,',
+                                  style: GoogleFonts.inter( // Updated Font
+                                    color: AppColors.white.withOpacity(0.9),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-
-                        if (shouldLogout == true && context.mounted) {
-                          await Provider.of<AuthProvider>(context, listen: false).logout();
-                          if (context.mounted) {
-                            Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
-                          }
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(50),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withAlpha(80),
-                            width: 1,
-                          ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  user?.name ?? 'Student',
+                                  style: GoogleFonts.poppins( // Updated Font
+                                    color: AppColors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
-                        child: Row(
+                        
+                        // Time Section
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.logout_rounded,
-                              color: AppColors.white.withAlpha(230),
-                              size: 16,
-                            ),
-                            const SizedBox(width: 6),
                             Text(
-                              'Logout',
-                              style: TextStyle(
-                                color: AppColors.white.withAlpha(230),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                              timeStr,
+                              style: GoogleFonts.poppins( // Updated Font
+                                color: AppColors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              fullDateStr,
+                              style: GoogleFonts.inter( // Updated Font
+                                color: AppColors.white.withOpacity(0.9),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-      actions: [
-        StreamBuilder(
-          stream: Stream.periodic(const Duration(seconds: 1)),
-          builder: (context, snapshot) {
-            final now = DateTime.now();
-            final time = DateFormat('hh:mm a').format(now);
-            final date = DateFormat('EEE, MMM d').format(now);
-            return Padding(
-              padding: const EdgeInsets.only(right: 20.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    time,
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    date,
-                    style: TextStyle(
-                      color: AppColors.white.withAlpha((255 * 0.9).round()),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.3,
+                      ],
                     ),
                   ),
                 ],
               ),
-            );
-          },
+            ),
+          ),
         ),
-        const SizedBox(width: 4),
-      ],
+      ),
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout == true && context.mounted) {
+      await Provider.of<AuthProvider>(context, listen: false).logout();
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+      }
+    }
   }
 
   Widget _buildQuickActions(BuildContext context) {
@@ -265,11 +324,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Quick Actions',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
           ),
@@ -281,7 +340,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   context,
                   icon: Icons.add_circle_outline,
                   title: 'Book\nEquipment',
-                  color: AppColors.primaryMaroon,
+                  backgroundColor: const Color(0xFFFBE9E7), // Light Red/Pink
+                  iconColor: const Color(0xFFC62828), // Dark Red
+                  borderColor: const Color(0xFFFFCCBC),
                   onTap: () {
                     Navigator.pushNamed(context, '/equipment');
                   },
@@ -293,7 +354,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   context,
                   icon: Icons.history,
                   title: 'View\nBookings',
-                  color: const Color(0xFF2196F3),
+                  backgroundColor: const Color(0xFFE3F2FD), // Light Blue
+                  iconColor: const Color(0xFF1565C0), // Dark Blue
+                  borderColor: const Color(0xFFBBDEFB),
                   onTap: () {
                     Navigator.pushNamed(context, '/my_bookings');
                   },
@@ -305,7 +368,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   context,
                   icon: Icons.qr_code_scanner,
                   title: 'Scan\nQR Code',
-                  color: const Color(0xFF4CAF50),
+                  backgroundColor: const Color(0xFFE8F5E9), // Light Green
+                  iconColor: const Color(0xFF2E7D32), // Dark Green
+                  borderColor: const Color(0xFFC8E6C9),
                   onTap: () {
                     Navigator.pushNamed(context, '/qr_scanner');
                   },
@@ -322,42 +387,47 @@ class _HomeScreenState extends State<HomeScreen> {
       BuildContext context, {
         required IconData icon,
         required String title,
-        required Color color,
+        required Color backgroundColor,
+        required Color iconColor,
+        required Color borderColor,
         required VoidCallback onTap,
       }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        height: 110,
-        decoration: BoxDecoration(
-          color: color.withAlpha((255 * 0.1).round()),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withAlpha((255 * 0.3).round()),
-            width: 1,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          height: 110,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: borderColor,
+              width: 1,
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 32,
-              color: color,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: color,
-                height: 1.2,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 32,
+                color: iconColor,
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: iconColor,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -368,20 +438,20 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               AppColors.primaryMaroon,
-              AppColors.primaryMaroon.withAlpha((255 * 0.85).round()),
+              AppColors.primaryMaroon.withOpacity(0.85),
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryMaroon.withAlpha((255 * 0.3).round()),
+              color: AppColors.primaryMaroon.withOpacity(0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -390,24 +460,24 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               '"EMPOWERING INNOVATION THROUGH EXCELLENCE IN LABORATORY EDUCATION"',
-              style: TextStyle(
-                fontSize: 18,
+              style: GoogleFonts.poppins(
+                fontSize: 16, // Slightly smaller for better fit
                 fontWeight: FontWeight.w600,
                 color: AppColors.white,
                 letterSpacing: 0.5,
-                height: 1.4,
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               '~ Amma',
-              style: TextStyle(
-                fontSize: 16,
+              style: GoogleFonts.inter(
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.white.withAlpha((255 * 0.95).round()),
+                color: AppColors.white.withOpacity(0.95),
                 letterSpacing: 0.3,
                 fontStyle: FontStyle.italic,
               ),
@@ -428,11 +498,11 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Recent Bookings',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -440,11 +510,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () {
                   Navigator.pushNamed(context, '/my_bookings');
                 },
-                child: const Text(
+                child: Text(
                   'View All',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     color: AppColors.primaryMaroon,
                     fontWeight: FontWeight.w600,
+                    fontSize: 14,
                   ),
                 ),
               ),
@@ -482,7 +553,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBookingStatusCard(Booking booking) {
     // Convert to IST (UTC + 5:30)
-    // Assuming the backend returns UTC time or we want to force IST display
     final istTime = booking.startTime.toUtc().add(const Duration(hours: 5, minutes: 30));
     
     final date = DateFormat('MMM dd, yyyy').format(istTime);
