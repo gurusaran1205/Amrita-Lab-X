@@ -5,6 +5,7 @@ import '../../providers/session_provider.dart';
 import '../../models/session.dart';
 import '../../utils/colors.dart';
 import '../../widgets/loading_widget.dart';
+import '../../widgets/admin_header.dart';
 
 class ApproveLogoutScreen extends StatefulWidget {
   const ApproveLogoutScreen({super.key});
@@ -45,6 +46,50 @@ class _ApproveLogoutScreenState extends State<ApproveLogoutScreen> {
     }
   }
 
+  Future<void> _handleReject(String sessionId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Confirm Reject"),
+        content: const Text("Are you sure you want to reject this logout request?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text("Reject"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final provider = context.read<SessionProvider>();
+      final success = await provider.rejectLogout(sessionId);
+
+      if (mounted) {
+        if (success) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Logout request rejected.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(provider.errorMessage ?? 'Operation failed'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sessionProvider = context.watch<SessionProvider>();
@@ -52,12 +97,8 @@ class _ApproveLogoutScreenState extends State<ApproveLogoutScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(
-        title: const Text('Approve Logouts'),
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      ),
+      appBar: const AdminHeader(title: 'Approve Logouts'),
+
       body: _buildContent(sessionProvider, sessions),
     );
   }
@@ -170,21 +211,41 @@ class _ApproveLogoutScreenState extends State<ApproveLogoutScreen> {
                  _buildInfoRow(Icons.logout, "Req Logout: ${loginFormat.format(session.logoutTime!)}"),
               ],
               const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _handleApprove(session.id),
-                  icon: const Icon(Icons.check_circle_outline),
-                  label: const Text('Approve Logout'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryMaroon,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                   Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _handleReject(session.id),
+                      icon: const Icon(Icons.close),
+                      label: const Text('Reject'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: const BorderSide(color: AppColors.error),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _handleApprove(session.id),
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text('Approve'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryMaroon,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

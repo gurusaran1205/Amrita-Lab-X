@@ -732,6 +732,42 @@ class ApiService {
     }
   }
 
+  /// Reject logout for a session
+  Future<ApiResponse<bool>> rejectLogout(String sessionId, String token) async {
+    try {
+      final url = Uri.parse('$_baseUrl/api/sessions/$sessionId/reject');
+      final response = await _client.put(
+        url,
+        headers: {
+          ..._headers,
+          'Authorization': 'Bearer $token',
+        },
+      ).timeout(AppConstants.connectionTimeout);
+
+      print("📥 Reject Logout Response: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        return ApiResponse.success(
+          data: true,
+          message: "Session logout rejected successfully",
+          statusCode: 200,
+        );
+      } else {
+        final body = jsonDecode(response.body);
+        return ApiResponse.error(
+          message: body['message'] ?? "Failed to reject logout",
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      print("❌ Reject Logout API Error: $e");
+      return ApiResponse.error(
+        message: AppConstants.genericError,
+        statusCode: 500,
+      );
+    }
+  }
+
   /// Download Report
   /// Returns raw bytes of the file
   Future<ApiResponse<List<int>>> downloadReport(String endpoint, String token) async {

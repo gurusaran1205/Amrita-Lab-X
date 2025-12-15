@@ -5,6 +5,8 @@ import '../../models/user.dart';
 import '../../utils/colors.dart';
 import '../../widgets/loading_widget.dart';
 
+import '../../widgets/admin_header.dart'; // Import AdminHeader
+
 class BlockUsersScreen extends StatefulWidget {
   const BlockUsersScreen({super.key});
 
@@ -107,17 +109,13 @@ class _BlockUsersScreenState extends State<BlockUsersScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(
-        title: const Text('Manage Users'),
-        backgroundColor: AppColors.white,
-        elevation: 1,
-        shadowColor: Colors.black.withOpacity(0.1),
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      appBar: AdminHeader(
+        title: 'Manage Users',
         actions: [
           IconButton(
             icon: Icon(
                 _isSearchVisible ? Icons.close : Icons.search,
-                color: AppColors.textSecondary),
+                color: Colors.white), // Changed to white
             onPressed: () {
               setState(() {
                 _isSearchVisible = !_isSearchVisible;
@@ -129,6 +127,7 @@ class _BlockUsersScreenState extends State<BlockUsersScreen> {
           ),
         ],
       ),
+
       body: Column(
         children: [
           AnimatedContainer(

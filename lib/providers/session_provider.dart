@@ -77,6 +77,30 @@ class SessionProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> rejectLogout(String sessionId) async {
+    _errorMessage = null;
+
+    final token = authProvider.token;
+    if (token == null) {
+      _errorMessage = 'Authentication token not found';
+      notifyListeners();
+      return false;
+    }
+
+    final response = await _apiService.rejectLogout(sessionId, token);
+
+    if (response.statusCode == 200) {
+      // Remove the session from the list locally after rejection
+      _pendingSessions.removeWhere((session) => session.id == sessionId);
+      notifyListeners();
+      return true;
+    } else {
+      _errorMessage = response.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();

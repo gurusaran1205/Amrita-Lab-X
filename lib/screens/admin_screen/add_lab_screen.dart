@@ -7,6 +7,7 @@ import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../utils/colors.dart';
 import '../../utils/constants.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class AddLabScreen extends StatefulWidget {
   const AddLabScreen({super.key});
@@ -79,12 +80,8 @@ class _AddLabScreenState extends State<AddLabScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Add New Laboratory'),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      ),
+      appBar: const AdminHeader(title: 'Add New Laboratory'),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppConstants.largePadding),
         child: Form(

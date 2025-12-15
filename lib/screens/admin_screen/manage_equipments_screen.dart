@@ -5,6 +5,7 @@ import '../../utils/colors.dart';
 import '../../utils/constants.dart';
 import '../../models/department.dart';
 import '../../models/lab.dart';
+import '../../widgets/admin_header.dart';
 
 class ManageEquipmentsScreen extends StatefulWidget {
   const ManageEquipmentsScreen({super.key});
@@ -26,11 +27,8 @@ class _ManageEquipmentsScreenState extends State<ManageEquipmentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Manage Equipment"),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
+      appBar: const AdminHeader(title: "Manage Equipment"),
+
       body: Consumer<EquipmentProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && provider.departments.isEmpty) {

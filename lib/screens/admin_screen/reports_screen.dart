@@ -8,9 +8,12 @@ import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/colors.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key});
+  final bool showAppBar; // New parameter to control AppBar visibility
+
+  const ReportsScreen({super.key, this.showAppBar = false});
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
@@ -84,13 +87,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
         // 3. Create Excel file
         var excel = Excel.createExcel();
-        // Rename the default Sheet1 to 'Report'
-        Sheet sheetObject = excel['Report'];
-        excel.setDefaultSheet('Report');
+        // Use the default sheet properly
+        String defaultSheet = excel.getDefaultSheet() ?? 'Sheet1';
+        Sheet sheetObject = excel[defaultSheet];
 
         // 4. Append rows to Excel
         for (var row in rows) {
-          sheetObject.appendRow(row.map((e) => TextCellValue(e.toString())).toList());
+          List<CellValue> rowData = row.map((e) {
+            String val = e?.toString() ?? '';
+            return TextCellValue(val);
+          }).toList();
+          
+          sheetObject.appendRow(rowData);
         }
 
         // 5. Encode Excel to bytes
@@ -134,15 +142,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      // AppBar is provided by the dashboard parent usually, but here we might need one 
-      // if this is stand-alone. In LabStaffDashboardScreen, it's inside a body, so no Scaffold appBar needed 
-      // if we want it to blend in. BUT LabStaffDashboardScreen uses bottom nav switching BODY.
-      // So this Scaffold is fine, but maybe we don't need the AppBar if the Dashboard provides the title.
-      // Checking LabStaffDashboardScreen: "appBar: AppBar(title: Text(_titles[_selectedIndex])..."
-      // So detailed screens usually don't have their own AppBar if they are "tabs".
-      // However, nested Screens like "Add Department" DO have AppBars.
-      // ReportsScreen is a TAB body. So it should probably NOT have an AppBar if the main screen has one.
-      // Let's keep it simple: Just the body.
+      appBar: widget.showAppBar ? const AdminHeader(title: "Reports") : null,
       body: _isLoading
           ? Center(
               child: Column(
