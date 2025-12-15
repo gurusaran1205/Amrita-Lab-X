@@ -513,6 +513,7 @@ class _EquipmentSelectionPageState extends State<EquipmentSelectionPage>
                         MaterialPageRoute(
                           builder: (context) => EquipmentAvailabilityPage(
                             equipmentId: provider.selectedEquipment!.id,
+                            equipmentName: provider.selectedEquipment!.name,
                           ),
                         ),
                       );

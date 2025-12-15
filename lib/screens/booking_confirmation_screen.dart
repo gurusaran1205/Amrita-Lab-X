@@ -8,12 +8,14 @@ import '../utils/colors.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final String equipmentId;
+  final String equipmentName;
   final DateTime startDate;
   final DateTime endDate;
 
   const BookingConfirmationScreen({
     super.key,
     required this.equipmentId,
+    required this.equipmentName,
     required this.startDate,
     required this.endDate,
   });
@@ -213,11 +215,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Equipment ID",
+                      "Equipment",
                       style: GoogleFonts.roboto(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -225,11 +227,19 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      widget.equipmentId,
+                      widget.equipmentName,
                       style: GoogleFonts.roboto(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      "ID: ${widget.equipmentId}",
+                      style: GoogleFonts.roboto(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
