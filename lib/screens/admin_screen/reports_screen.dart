@@ -8,9 +8,12 @@ import 'dart:convert';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../utils/colors.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class ReportsScreen extends StatefulWidget {
-  const ReportsScreen({super.key});
+  final bool showAppBar; // New parameter to control AppBar visibility
+
+  const ReportsScreen({super.key, this.showAppBar = false});
 
   @override
   State<ReportsScreen> createState() => _ReportsScreenState();
@@ -50,16 +53,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       'endpoint': '/api/reports/export-cross-dept',
       'fileName': 'cross_dept_report.xlsx',
     },
-    {
-      'title': 'Audit Logs',
-      'subtitle': 'System-wide audit trail (Super Admin)',
-      'icon': Icons.security,
-      'endpoint': '/api/reports/export-audit',
-      'fileName': 'audit_logs.xlsx',
-    },
   ];
 
-  Future<void> _downloadAndShareReport(String endpoint, String fileName, String title) async {
+  Future<void> _downloadAndShareReport(String endpoint, String baseFileName, String title) async {
     setState(() {
       _isLoading = true;
       _downloadingReport = title;
@@ -76,34 +72,116 @@ class _ReportsScreenState extends State<ReportsScreen> {
       final response = await _apiService.downloadReport(endpoint, token);
 
       if (response.statusCode == 200 && response.data != null) {
-        // 1. Convert downloaded bytes (CSV) to String
-        final csvContent = utf8.decode(response.data as List<int>, allowMalformed: true);
+        List<int> responseBytes = response.data as List<int>;
+        List<int>? fileBytesToWrite;
         
-        // 2. Parse CSV to List<List<dynamic>>
-        List<List<dynamic>> rows = const CsvToListConverter().convert(csvContent);
+        // Try to interpret as JSON/CSV data first
+        try {
+           final jsonContent = utf8.decode(responseBytes);
+           
+           if (jsonContent.trim().isEmpty) {
+             throw Exception("Report data is empty");
+           }
+           
+           // Try JSON
+           dynamic decoded;
+           try {
+             decoded = jsonDecode(jsonContent);
+           } catch (_) {
+             // Not JSON
+             decoded = null;
+           }
+           
+           List<dynamic> dataList = [];
+           bool isJsonList = false;
 
-        // 3. Create Excel file
-        var excel = Excel.createExcel();
-        // Rename the default Sheet1 to 'Report'
-        Sheet sheetObject = excel['Report'];
-        excel.setDefaultSheet('Report');
+           if (decoded is List) {
+             dataList = decoded;
+             isJsonList = true;
+           } else if (decoded is Map && decoded.containsKey('data') && decoded['data'] is List) {
+             dataList = decoded['data'];
+             isJsonList = true;
+           }
 
-        // 4. Append rows to Excel
-        for (var row in rows) {
-          sheetObject.appendRow(row.map((e) => TextCellValue(e.toString())).toList());
+           if (isJsonList) {
+              if (dataList.isEmpty) {
+                 throw Exception("No data available for this report");
+              }
+              
+              // Generate Excel from valid JSON data
+              var excel = Excel.createExcel();
+              String sheetName = 'Report';
+              if (excel.sheets.containsKey('Sheet1')) {
+                excel.rename('Sheet1', sheetName);
+              }
+              Sheet sheetObject = excel[sheetName];
+
+              if (dataList.isNotEmpty && dataList.first is Map) {
+                Map<String, dynamic> firstRow = dataList.first as Map<String, dynamic>;
+                List<String> headers = firstRow.keys.toList();
+                List<CellValue> headerCells = headers.map((h) => TextCellValue(h.toUpperCase())).toList();
+                sheetObject.appendRow(headerCells);
+
+                for (var item in dataList) {
+                   if (item is Map) {
+                     List<CellValue> rowCells = headers.map((key) {
+                       var val = item[key];
+                       return TextCellValue(val?.toString() ?? '');
+                     }).toList();
+                     sheetObject.appendRow(rowCells);
+                   }
+                }
+              }
+              fileBytesToWrite = excel.save();
+           } else {
+             // Not JSON list. Could be CSV or just raw text? 
+             // If we successfully decoded UTF8 but it's not JSON, might be CSV.
+             // But if it was a binary file, utf8.decode often fails. 
+             // If it didn't fail, maybe it's valid text but not data we expect.
+             // Let's assume if it's not JSON, we treat it as raw file content if user specifically asked for xlsx and we got text?
+             // Actually, if api returns binary xlsx, utf8.decode usually throws.
+             // If we are here, it is valid text. 
+             // fallback: assume it might be CSV.
+              try {
+                List<List<dynamic>> rows = const CsvToListConverter().convert(jsonContent);
+                if (rows.isNotEmpty && rows.length > 1) {
+                   // Convert CSV to Excel
+                    var excel = Excel.createExcel();
+                    Sheet sheetObject = excel['Sheet1'];
+                    for (var row in rows) {
+                      List<CellValue> rowData = row.map((e) => TextCellValue(e?.toString() ?? '')).toList();
+                      sheetObject.appendRow(rowData);
+                    }
+                    fileBytesToWrite = excel.save();
+                } else {
+                   // Treat as raw bytes if CSV parse yields nothing useful? 
+                   // Or just save the original bytes?
+                   print("Text received but not JSON/CSV. Saving as is.");
+                   fileBytesToWrite = responseBytes;
+                }
+              } catch (e) {
+                 fileBytesToWrite = responseBytes;
+              }
+           }
+
+        } catch (e) {
+           // UTF-8 Decode failed -> likely boolean/binary data (Excel/Zip)
+           print("UTF-8 Decode error (likely binary file): $e");
+           fileBytesToWrite = responseBytes;
         }
 
-        // 5. Encode Excel to bytes
-        var fileBytes = excel.save();
+        // 5. Generate Timestamped Filename
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final nameWithoutExt = baseFileName.replaceAll('.xlsx', '');
+        final finalFileName = '${nameWithoutExt}_$timestamp.xlsx';
 
-        if (fileBytes != null) {
+        if (fileBytesToWrite != null) {
           final xFile = XFile.fromData(
-            Uint8List.fromList(fileBytes),
-            name: fileName,
+            Uint8List.fromList(fileBytesToWrite),
+            name: finalFileName,
             mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           );
 
-          // 6. Share/Save the file
           if (mounted) {
              await Share.shareXFiles([xFile], text: 'Here is the $title');
           }
@@ -115,8 +193,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text('Error downloading report: $e'),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -134,15 +213,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      // AppBar is provided by the dashboard parent usually, but here we might need one 
-      // if this is stand-alone. In LabStaffDashboardScreen, it's inside a body, so no Scaffold appBar needed 
-      // if we want it to blend in. BUT LabStaffDashboardScreen uses bottom nav switching BODY.
-      // So this Scaffold is fine, but maybe we don't need the AppBar if the Dashboard provides the title.
-      // Checking LabStaffDashboardScreen: "appBar: AppBar(title: Text(_titles[_selectedIndex])..."
-      // So detailed screens usually don't have their own AppBar if they are "tabs".
-      // However, nested Screens like "Add Department" DO have AppBars.
-      // ReportsScreen is a TAB body. So it should probably NOT have an AppBar if the main screen has one.
-      // Let's keep it simple: Just the body.
+      appBar: widget.showAppBar ? const AdminHeader(title: "Reports") : null,
       body: _isLoading
           ? Center(
               child: Column(

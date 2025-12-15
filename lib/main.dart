@@ -11,6 +11,7 @@ import 'package:amrita_ulabs/screens/admin_screen/add_lab_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/add_equipment_screen.dart';
 import 'package:amrita_ulabs/providers/qr_provider.dart';
 import 'package:amrita_ulabs/screens/admin_screen/qr_management_screen.dart';
+import 'package:amrita_ulabs/screens/admin_screen/reports_screen.dart'; // Added Import
 import 'package:amrita_ulabs/screens/admin_screen/edit_department_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/delete_department_screen.dart';
 import 'package:amrita_ulabs/screens/admin_screen/manage_departments_screen.dart';
@@ -143,6 +144,7 @@ class AmritaULabsApp extends StatelessWidget {
           },
           '/manage_equipments': (context) => const ManageEquipmentsScreen(),
           '/delete_equipment': (context) => const DeleteEquipmentScreen(),
+          '/reports': (context) => const ReportsScreen(showAppBar: true), // Added Route
           '/edit_equipment': (context) {
             final args = ModalRoute.of(context)?.settings.arguments
                 as Map<String, dynamic>?;

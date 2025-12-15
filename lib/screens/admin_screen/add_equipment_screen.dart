@@ -8,6 +8,7 @@ import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../utils/colors.dart';
 import '../../utils/constants.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class AddEquipmentScreen extends StatefulWidget {
   const AddEquipmentScreen({super.key});
@@ -103,12 +104,8 @@ class _AddEquipmentScreenState extends State<AddEquipmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Add New Equipment'),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      ),
+      appBar: const AdminHeader(title: 'Add New Equipment'),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppConstants.largePadding),
         child: Form(

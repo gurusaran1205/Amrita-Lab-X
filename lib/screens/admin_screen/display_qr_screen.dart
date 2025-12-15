@@ -5,6 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../utils/colors.dart';
 import '../../utils/constants.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class DisplayQrScreen extends StatelessWidget {
   final String qrData;
@@ -70,12 +71,8 @@ class DisplayQrScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(title),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      ),
+      appBar: AdminHeader(title: title),
+
       body: Padding(
         padding: const EdgeInsets.all(AppConstants.largePadding),
         child: Column(

@@ -6,6 +6,7 @@ import '../../utils/colors.dart';
 import '../../utils/constants.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_button.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class EditDepartmentScreen extends StatefulWidget {
   final String departmentId;
@@ -75,11 +76,8 @@ class _EditDepartmentScreenState extends State<EditDepartmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Edit Department"),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
+      appBar: const AdminHeader(title: "Edit Department"),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppConstants.largePadding),
         child: Form(

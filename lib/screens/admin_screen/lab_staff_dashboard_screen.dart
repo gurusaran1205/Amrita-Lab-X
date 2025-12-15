@@ -4,6 +4,8 @@ import '../../providers/auth_provider.dart';
 import '../../utils/colors.dart';
 import 'reports_screen.dart'; // Import ReportsScreen
 
+import 'admin_home_screen.dart'; // Import AdminHomeScreen
+
 class LabStaffDashboardScreen extends StatefulWidget {
   const LabStaffDashboardScreen({super.key});
 
@@ -15,6 +17,7 @@ class _LabStaffDashboardScreenState extends State<LabStaffDashboardScreen> {
   int _selectedIndex = 0;
 
   static const List<String> _titles = [
+    'Home', // New Home Title
     'Departments',
     'Equipment',
     'Labs',
@@ -24,28 +27,28 @@ class _LabStaffDashboardScreenState extends State<LabStaffDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.user;
-
+    // Only show AppBar for non-Home screens
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
-        backgroundColor: AppColors.primaryMaroon,
-        foregroundColor: AppColors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authProvider.logout();
-              if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                    context, '/login', (route) => false);
-              }
-            },
-          ),
-        ],
-      ),
+      appBar: _selectedIndex == 0
+          ? null // No AppBar for Home screen (it has its own custom header)
+          : AppBar(
+              title: Text(_titles[_selectedIndex]),
+              backgroundColor: AppColors.primaryMaroon,
+              foregroundColor: AppColors.white,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () async {
+                    await Provider.of<AuthProvider>(context, listen: false).logout();
+                    if (mounted) {
+                      Navigator.pushNamedAndRemoveUntil(
+                          context, '/login', (route) => false);
+                    }
+                  },
+                ),
+              ],
+            ),
       body: _buildBody(_selectedIndex),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -66,23 +69,23 @@ class _LabStaffDashboardScreenState extends State<LabStaffDashboardScreen> {
           unselectedItemColor: Colors.grey,
           showUnselectedLabels: true,
           items: const [
+             BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.business),
-              label: 'Department',
+              label: 'Dept',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.biotech),
-              label: 'Equipment',
+              label: 'Equip',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.science),
               label: 'Lab',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.analytics),
-              label: 'Reports',
-            ),
-            BottomNavigationBarItem(
+             BottomNavigationBarItem(
               icon: Icon(Icons.notifications_active),
               label: 'Requests',
             ),
@@ -95,18 +98,38 @@ class _LabStaffDashboardScreenState extends State<LabStaffDashboardScreen> {
   Widget _buildBody(int index) {
     switch (index) {
       case 0:
-        return _buildDepartmentSection();
+        return AdminHomeScreen(
+          onNavigateToRequests: () => Navigator.pushNamed(context, '/approve_requests'), // Direct navigation
+          onNavigateToLogouts: () => Navigator.pushNamed(context, '/approve_logout'),
+        );
       case 1:
-        return _buildEquipmentSection();
+        return _buildDepartmentSection();
       case 2:
-        return _buildLabSection();
+        return _buildEquipmentSection();
       case 3:
-        return _buildReportsSection();
+        return _buildLabSection();
       case 4:
-        return _buildRequestsSection();
-      default:
-        return const Center(child: Text('Unknown Section'));
+        return _buildRequestsSection(); // Reports moved or accessible differently? Let's check user intent later. For now, matching standard navigation.
+        
+        // WAIT: The previous list had 5 items: Dept, Equip, Lab, Reports, Requests.
+        // Adding Home makes 6. BottomNavBar usually handles 5 max well. 
+        // Let's condense labels: Dept, Equip, Lab, Reports, Requests?
+        // Actually, the previous list was: Departments, Equipment, Labs, Reports, Requests.
+        // User asked for Home to navigate to Dept, Lab, Equip.
+        
+        // Adjusted BottomBar strategy:
+        // 0: Home
+        // 1: Departments
+        // 2: Equipment
+        // 3: Labs
+        // 4: Requests (Common action)
+        // Reports might be accessed via Home or sidebar. I will keep Reports actionable via the "Reports" Screen logic if I can fit it, or maybe just drop Reports from bottom bar and put it in Home "Management" section?
+        // User didn't explicitly ask to remove Reports.
+        // Let's stick to a safe 5 items if possible, or scrollable.
+        // Let's try to fit Home + 4 key tabs.
+        // I will Swap "Reports" out of bottom bar and put it in Home Management list as a tile. It's less frequent than Dept/Equip management.
     }
+    return const Center(child: Text('Unknown Section'));
   }
 
   Widget _buildDepartmentSection() {

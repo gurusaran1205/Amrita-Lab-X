@@ -8,6 +8,7 @@ import '../../providers/qr_provider.dart';
 import '../../utils/colors.dart';
 import '../../utils/constants.dart';
 import 'display_qr_screen.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class QrManagementScreen extends StatefulWidget {
   const QrManagementScreen({super.key});
@@ -57,12 +58,8 @@ class _QrManagementScreenState extends State<QrManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Generate QR Codes'),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
-      ),
+      appBar: const AdminHeader(title: 'Generate QR Codes'),
+
       body: Consumer<EquipmentProvider>(
         builder: (context, equipmentProvider, child) {
           if (equipmentProvider.isLoading &&

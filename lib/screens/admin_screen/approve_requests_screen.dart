@@ -6,6 +6,8 @@ import '../../models/booking.dart';
 import '../../utils/colors.dart';
 import '../../widgets/loading_widget.dart';
 
+import '../../widgets/admin_header.dart'; // Import AdminHeader
+
 class ApproveRequestsScreen extends StatefulWidget {
   const ApproveRequestsScreen({super.key});
 
@@ -202,17 +204,13 @@ class _ApproveRequestsScreenState extends State<ApproveRequestsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.lightGray,
-      appBar: AppBar(
-        title: const Text('Approve Booking Requests'),
-        backgroundColor: AppColors.white,
-        elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.1),
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+      appBar: AdminHeader(
+        title: 'Approve Booking Requests',
         actions: [
           IconButton(
             icon: Icon(
                 _isSearchVisible ? Icons.close : Icons.search,
-                color: AppColors.textSecondary),
+                color: Colors.white), // Changed to white
             onPressed: () {
               setState(() {
                 _isSearchVisible = !_isSearchVisible;
@@ -224,11 +222,12 @@ class _ApproveRequestsScreenState extends State<ApproveRequestsScreen> {
           ),
           IconButton(
             icon:
-                const Icon(Icons.filter_list, color: AppColors.textSecondary),
+                const Icon(Icons.filter_list, color: Colors.white), // Changed to white
             onPressed: _showFilterSheet,
           ),
         ],
       ),
+
       body: Column(
         children: [
           // Animated Search Bar

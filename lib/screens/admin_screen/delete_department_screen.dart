@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/equipment_provider.dart';
 import '../../utils/colors.dart';
 import '../../utils/constants.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 import '../../widgets/custom_button.dart';
 
 class DeleteDepartmentScreen extends StatefulWidget {
@@ -56,11 +57,8 @@ class _DeleteDepartmentScreenState extends State<DeleteDepartmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Delete Department"),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
+      appBar: const AdminHeader(title: "Delete Department"),
+
       body: Consumer<EquipmentProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading) {

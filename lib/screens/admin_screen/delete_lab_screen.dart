@@ -4,6 +4,7 @@ import '../../providers/equipment_provider.dart';
 import '../../utils/colors.dart';
 import '../../utils/constants.dart';
 import '../../models/department.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class DeleteLabScreen extends StatefulWidget {
   const DeleteLabScreen({super.key});
@@ -55,11 +56,8 @@ class _DeleteLabScreenState extends State<DeleteLabScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Delete Lab"),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
+      appBar: const AdminHeader(title: "Delete Lab"),
+
       body: Consumer<EquipmentProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && provider.departments.isEmpty) {

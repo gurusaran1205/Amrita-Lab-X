@@ -6,6 +6,7 @@ import '../../utils/constants.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_button.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import '../../widgets/admin_header.dart'; // Import AdminHeader
 
 class EditEquipmentScreen extends StatefulWidget {
   final String equipmentId;
@@ -93,11 +94,8 @@ class _EditEquipmentScreenState extends State<EditEquipmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text("Edit Equipment"),
-        backgroundColor: AppColors.background,
-        elevation: 0,
-      ),
+      appBar: const AdminHeader(title: "Edit Equipment"),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppConstants.largePadding),
         child: Form(
