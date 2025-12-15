@@ -9,6 +9,7 @@ import '../models/api_response.dart';
 import '../models/forgot_password_models.dart';
 import '../services/api_service.dart';
 import '../utils/constants.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 /// Authentication Provider using Provider state management
 /// Handles user authentication, OTP verification, forgot password, and user session
@@ -47,7 +48,6 @@ class AuthProvider with ChangeNotifier {
   /// Initialize the auth provider
   AuthProvider() {
     _apiService.initialize();
-    _loadUserFromStorage();
   }
 
   @override
@@ -432,6 +432,40 @@ class AuthProvider with ChangeNotifier {
     _forgotPasswordOtpSentAt = null;
   }
 
+
+  /// Try to auto-login from local storage
+  /// Returns true if valid token exists and is not expired, false otherwise
+  Future<bool> tryAutoLogin() async {
+    await _loadUserFromStorage();
+    
+    // Check if user and token exist
+    if (_user == null || _user!.token == null) {
+      _setState(AuthState.initial);
+      return false;
+    }
+
+    final token = _user!.token!;
+    
+    // Check if token is expired
+    bool isExpired = true;
+    try {
+      isExpired = JwtDecoder.isExpired(token);
+    } catch (e) {
+      debugPrint('❌ Error decoding token: $e');
+      isExpired = true; // Assume expired on error
+    }
+
+    if (isExpired) {
+      debugPrint('⚠️ Token expired, logging out...');
+      await logout(); // Clear storage and state
+      return false;
+    }
+
+    // Token is valid
+    _setState(AuthState.authenticated);
+    return true;
+  }
+
   /// Save user data to local storage
   Future<void> _saveUserToStorage(User user) async {
     try {
@@ -455,7 +489,7 @@ class AuthProvider with ChangeNotifier {
       if (userDataString != null && authToken != null) {
         final userData = jsonDecode(userDataString);
         _user = User.fromJson(userData);
-        _setState(AuthState.authenticated);
+        // State update moved to tryAutoLogin
         debugPrint('✅ User loaded from storage: ${_user!.email}');
       }
     } catch (e) {

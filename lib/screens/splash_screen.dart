@@ -36,28 +36,25 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    _checkAuthAndNavigate();
+    _initializeApp();
   }
 
-  Future<void> _checkAuthAndNavigate() async {
-    // Wait for animation + extra time
-    await Future.delayed(const Duration(seconds: 3));
+  Future<void> _initializeApp() async {
+    // Wait for BOTH the animation time (3s) AND the auth check
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    final results = await Future.wait([
+      Future.delayed(const Duration(seconds: 3)), // Minimum splash time
+      authProvider.tryAutoLogin(), // Actual auth check
+    ]);
+
+    // results[1] is the return value of tryAutoLogin (bool)
+    final bool isLoggedIn = results[1] as bool;
 
     if (!mounted) return;
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    // You might want to try verifying the token validity here if needed
-    // For now, simple check:
-    final isLoggedIn = authProvider.token != null && authProvider.token!.isNotEmpty;
-
     if (isLoggedIn) {
-       // Navigate to Home/Bookings
-       // Assuming MyBookingsScreen or a Dashboard exists. 
-       // If you have a MainScreen/HomeScreen, use that.
-       // Based on main.dart analysis, there might not be a single 'Home'. 
-       // I'll default to simple navigation and let main.dart routing handle specifics if needed, 
-       // but here I'll pushReplacement.
-       Navigator.of(context).pushReplacementNamed('/my_bookings'); // Or relevant route
+       Navigator.of(context).pushReplacementNamed('/main_navigation');
     } else {
       Navigator.of(context).pushReplacementNamed('/login');
     }
@@ -85,8 +82,8 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                    color: Colors.transparent,
+                    shape: BoxShape.circle, // Circular shape
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
@@ -95,8 +92,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
+                  child: ClipOval( // Clip image to circle
                     child: Image.asset(
                       'assets/icons/app_icon.png',
                       fit: BoxFit.cover,
