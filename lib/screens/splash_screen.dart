@@ -53,10 +53,19 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (!mounted) return;
 
+    // ignore: no_leading_underscores_for_local_identifiers
+    void _navigateToDashboard(String? role) {
+      if (role == 'admin' || role == 'lab_staff') {
+        Navigator.pushReplacementNamed(context, '/lab_staff_dashboard');
+      } else {
+        Navigator.pushReplacementNamed(context, '/main_navigation');
+      }
+    }
+
     if (isLoggedIn) {
-       Navigator.of(context).pushReplacementNamed('/main_navigation');
+      _navigateToDashboard(authProvider.user?.role);
     } else {
-      Navigator.of(context).pushReplacementNamed('/login');
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
